@@ -11,7 +11,7 @@ function subscribe(onChange: () => void) {
   return () => observer.disconnect();
 }
 
-// The initial theme is applied by an inline script in index.html, so there is no flash.
+// The initial theme is applied by public/theme.js before the first paint.
 export function useTheme() {
   const theme = useSyncExternalStore(subscribe, read);
 

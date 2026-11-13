@@ -59,6 +59,10 @@ describe('HttpChecker (against a local server)', () => {
         setTimeout(() => res.end('late'), 300);
         return;
       }
+      if (req.url === '/huge') {
+        res.end(`start ${'x'.repeat(2 * 1024 * 1024)} needle-at-the-end`);
+        return;
+      }
       if (req.url === '/missing') {
         res.statusCode = 404;
         res.end('not here');
@@ -100,6 +104,12 @@ describe('HttpChecker (against a local server)', () => {
       status: 'down',
       message: 'На странице нет текста «checkout»',
     });
+  });
+
+  it('reads at most 1 MB of the page when looking for a keyword', async () => {
+    expect((await checker.check(http('/huge', { keyword: 'start' }), signal)).status).toBe('up');
+    const late = await checker.check(http('/huge', { keyword: 'needle-at-the-end' }), signal);
+    expect(late.status).toBe('down');
   });
 
   it('is degraded when slower than the threshold', async () => {

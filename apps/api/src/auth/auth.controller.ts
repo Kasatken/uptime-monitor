@@ -29,7 +29,7 @@ export class AuthController {
     res.cookie(SESSION_COOKIE, token, {
       httpOnly: true,
       sameSite: 'lax',
-      secure: this.config.isProduction,
+      secure: this.config.cookieSecure,
       maxAge: SESSION_TTL_SECONDS * 1000,
       path: '/',
     });

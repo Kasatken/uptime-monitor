@@ -7,6 +7,7 @@ import { TlsCertificateProbe } from './tls-certificate.probe.js';
 
 const USER_AGENT = 'VigilUptimeMonitor/1.0 (+https://github.com/)';
 const SSL_WARNING_DAYS = 7;
+export const MAX_BODY_BYTES = 1024 * 1024;
 
 @MonitorChecker('http')
 @Injectable()
@@ -31,7 +32,7 @@ export class HttpChecker implements Checker<'http'> {
       responseMs = Math.round(performance.now() - startedAt);
       statusCode = response.status;
 
-      if (keyword && method === 'GET') body = await response.text();
+      if (keyword && method === 'GET') body = await readText(response, MAX_BODY_BYTES);
       else await response.body?.cancel();
     } catch (error) {
       return { status: 'down', responseMs: null, message: describeNetworkError(error, timeoutMs) };
@@ -81,4 +82,22 @@ export class HttpChecker implements Checker<'http'> {
     }
     return { ...base, status: 'up', sslExpiresAt };
   }
+}
+
+// The keyword search reads at most `limit` bytes, so a huge or endless page cannot eat the memory.
+async function readText(response: Response, limit: number): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) return '';
+
+  const decoder = new TextDecoder();
+  let text = '';
+  let received = 0;
+  while (received < limit) {
+    const { done, value } = await reader.read();
+    if (done) return text + decoder.decode();
+    received += value.byteLength;
+    text += decoder.decode(value, { stream: true });
+  }
+  await reader.cancel();
+  return text;
 }

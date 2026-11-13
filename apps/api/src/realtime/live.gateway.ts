@@ -11,6 +11,7 @@ import { type IncidentDto, LIVE_PATH, type LiveEvents, type LiveEventType } from
 import { type Server, WebSocket } from 'ws';
 import { AuthService } from '../auth/auth.service.js';
 import { toCheckDto } from '../checks/check.mapper.js';
+import { AppConfig } from '../config/app-config.js';
 import {
   type CheckCompletedEvent,
   DomainEvent,
@@ -33,7 +34,10 @@ export class LiveGateway implements OnGatewayInit, OnGatewayConnection, OnModule
   private readonly alive = new WeakSet<WebSocket>();
   private keepalive?: NodeJS.Timeout;
 
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly config: AppConfig,
+  ) {}
 
   afterInit() {
     this.keepalive = setInterval(() => this.checkAlive(), KEEPALIVE_INTERVAL_MS);
@@ -44,8 +48,14 @@ export class LiveGateway implements OnGatewayInit, OnGatewayConnection, OnModule
   }
 
   // The session cookie is read once, at the handshake: that decides what this socket may receive.
+  // Browsers attach cookies to WebSocket handshakes from any site, so admin data also requires our
+  // own Origin (cross-site WebSocket hijacking). Non-browser clients send no Origin and no cookie.
   handleConnection(socket: WebSocket, request: IncomingMessage) {
-    if (this.auth.isValidCookieHeader(request.headers.cookie)) this.admins.add(socket);
+    const origin = request.headers.origin;
+    const trustedOrigin = origin === undefined || origin === this.config.appOrigin;
+    if (trustedOrigin && this.auth.isValidCookieHeader(request.headers.cookie)) {
+      this.admins.add(socket);
+    }
     this.alive.add(socket);
     socket.on('pong', () => this.alive.add(socket));
   }
