@@ -39,7 +39,11 @@ export async function connectDatabase(options: {
   if (!options.pgliteDir.startsWith('memory://')) {
     await mkdir(options.pgliteDir, { recursive: true });
   }
-  const client = await PGlite.create(options.pgliteDir);
+  // Postgres defaults (128 MB shared_buffers, 100 connections) are sized for a real server;
+  // a handful of monitors in one process needs a fraction of that.
+  const client = await PGlite.create(options.pgliteDir, {
+    postgresqlconf: ['shared_buffers=16MB', 'max_connections=4', 'work_mem=2MB'],
+  });
   const db = drizzlePglite(client, { schema, casing: 'snake_case' });
   await migratePglite(db, { migrationsFolder: MIGRATIONS_FOLDER });
   logger.log(`Using embedded PGlite at ${options.pgliteDir}`);
