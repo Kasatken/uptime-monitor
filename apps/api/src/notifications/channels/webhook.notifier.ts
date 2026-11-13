@@ -1,10 +1,7 @@
 import { alertLines, alertTitle } from '../alert-text.js';
 import { type Alert, NOTIFY_TIMEOUT_MS, type Notifier } from '../notifier.js';
 
-/**
- * Generic JSON webhook. `text` is what Slack reads, `content` is what Discord reads,
- * the structured fields are for anything custom (n8n, Zapier, your own bot).
- */
+// `text` is read by Slack, `content` by Discord.
 export class WebhookNotifier implements Notifier {
   readonly name = 'webhook';
 

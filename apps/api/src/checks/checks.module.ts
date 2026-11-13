@@ -16,7 +16,6 @@ import { RetentionService } from './retention.service.js';
   imports: [DiscoveryModule, MonitorsModule],
   controllers: [ChecksController, HeartbeatController],
   providers: [
-    // checkers are discovered by the registry via @MonitorChecker()
     HttpChecker,
     TcpChecker,
     HeartbeatChecker,

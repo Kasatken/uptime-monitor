@@ -18,7 +18,6 @@ interface ListOptions {
 export class IncidentsRepository {
   constructor(@InjectDatabase() private readonly db: Database) {}
 
-  /** Returns null if the monitor already has an open incident (guarded by a partial unique index). */
   async open(monitorId: string, cause: string | null): Promise<IncidentRecord | null> {
     const [row] = await this.db
       .insert(incidents)

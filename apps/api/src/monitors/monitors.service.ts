@@ -27,7 +27,7 @@ export class MonitorsService {
 
   async get(id: string): Promise<MonitorRecord> {
     const monitor = await this.monitors.findById(id);
-    if (!monitor) throw new NotFoundException('Monitor not found');
+    if (!monitor) throw new NotFoundException('Монитор не найден');
     return monitor;
   }
 
@@ -56,7 +56,7 @@ export class MonitorsService {
     if (config) patch.config = this.parseConfig(existing.type, config);
 
     const monitor = await this.monitors.update(id, patch);
-    if (!monitor) throw new NotFoundException('Monitor not found');
+    if (!monitor) throw new NotFoundException('Монитор не найден');
 
     this.events.emit(DomainEvent.MonitorSaved, { monitor });
     return monitor;
@@ -67,7 +67,7 @@ export class MonitorsService {
     if (existing.status === 'paused') return existing;
 
     const monitor = await this.monitors.update(id, { status: 'paused', failStreak: 0 });
-    if (!monitor) throw new NotFoundException('Monitor not found');
+    if (!monitor) throw new NotFoundException('Монитор не найден');
 
     this.events.emit(DomainEvent.MonitorSaved, { monitor });
     this.events.emit(DomainEvent.MonitorStatusChanged, {
@@ -83,7 +83,7 @@ export class MonitorsService {
     if (existing.status !== 'paused') return existing;
 
     const monitor = await this.monitors.update(id, { status: 'pending', failStreak: 0 });
-    if (!monitor) throw new NotFoundException('Monitor not found');
+    if (!monitor) throw new NotFoundException('Монитор не найден');
 
     this.events.emit(DomainEvent.MonitorSaved, { monitor });
     return monitor;
@@ -91,7 +91,7 @@ export class MonitorsService {
 
   async remove(id: string): Promise<void> {
     const removed = await this.monitors.remove(id);
-    if (!removed) throw new NotFoundException('Monitor not found');
+    if (!removed) throw new NotFoundException('Монитор не найден');
     this.events.emit(DomainEvent.MonitorRemoved, { id });
   }
 

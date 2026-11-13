@@ -13,7 +13,6 @@ export const HISTORY_DAYS = 90;
 export class StatsService {
   constructor(private readonly checks: ChecksRepository) {}
 
-  /** Everything the dashboard list needs, in three queries total – not three per monitor. */
   async summarize(monitors: MonitorRecord[]): Promise<MonitorSummaryDto[]> {
     const ids = monitors.map((monitor) => monitor.id);
     const [points, uptime] = await Promise.all([

@@ -53,11 +53,11 @@ export class HttpChecker implements Checker<'http'> {
       return {
         ...base,
         status: 'down',
-        message: `Expected HTTP ${expectedStatus}, got ${statusCode}`,
+        message: `Ожидался код ${expectedStatus}, получен ${statusCode}`,
       };
     }
     if (keyword && method === 'GET' && !body.includes(keyword)) {
-      return { ...base, status: 'down', message: `Keyword "${keyword}" not found in response` };
+      return { ...base, status: 'down', message: `На странице нет текста «${keyword}»` };
     }
 
     const sslExpiresAt = url.startsWith('https:') ? await this.certificates.expiryFor(url) : null;
@@ -68,7 +68,7 @@ export class HttpChecker implements Checker<'http'> {
         ...base,
         status: 'degraded',
         sslExpiresAt,
-        message: `SSL certificate expires in ${Math.max(sslDaysLeft, 0)} days`,
+        message: `SSL-сертификат истекает через ${Math.max(sslDaysLeft, 0)} дн.`,
       };
     }
     if (degradedAfterMs && responseMs > degradedAfterMs) {
@@ -76,7 +76,7 @@ export class HttpChecker implements Checker<'http'> {
         ...base,
         status: 'degraded',
         sslExpiresAt,
-        message: `Slow response: ${responseMs} ms (limit ${degradedAfterMs} ms)`,
+        message: `Медленный ответ: ${responseMs} мс при пороге ${degradedAfterMs} мс`,
       };
     }
     return { ...base, status: 'up', sslExpiresAt };

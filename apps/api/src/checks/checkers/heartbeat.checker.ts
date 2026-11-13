@@ -2,11 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { formatDuration } from '@vigil/shared';
 import { type Checker, type CheckOutcome, MonitorChecker, type MonitorOf } from './checker.js';
 
-/**
- * Passive monitor: instead of us calling the target, the target (a cron job,
- * a backup script on the VPS) calls the ping URL. The check only verifies that
- * the last ping is recent enough.
- */
 @MonitorChecker('heartbeat')
 @Injectable()
 export class HeartbeatChecker implements Checker<'heartbeat'> {
@@ -24,8 +19,8 @@ export class HeartbeatChecker implements Checker<'heartbeat'> {
       status: 'down',
       responseMs: null,
       message: monitor.lastHeartbeatAt
-        ? `No ping for ${formatDuration(silentForMs)}`
-        : 'No ping received yet',
+        ? `Нет сигнала уже ${formatDuration(silentForMs)}`
+        : 'Сигнал ещё ни разу не приходил',
     };
   }
 }

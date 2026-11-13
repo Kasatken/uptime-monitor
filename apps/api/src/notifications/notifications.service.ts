@@ -47,7 +47,6 @@ export class NotificationsService {
     });
   }
 
-  /** One broken channel must not stop the others. */
   private async dispatch(alert: Alert) {
     const results = await Promise.allSettled(this.notifiers.map((n) => n.send(alert)));
 

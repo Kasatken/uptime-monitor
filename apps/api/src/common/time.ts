@@ -6,10 +6,8 @@ export const hoursAgo = (hours: number, now = new Date()) =>
 
 export const daysAgo = (days: number, now = new Date()) => new Date(now.getTime() - days * DAY_MS);
 
-/** "2026-11-13" for the UTC calendar day of `date`. */
 export const utcDay = (date: Date) => date.toISOString().slice(0, 10);
 
-/** The last `count` UTC days, oldest first, ending with today. */
 export function lastUtcDays(count: number, now = new Date()): string[] {
   return Array.from({ length: count }, (_, i) => utcDay(daysAgo(count - 1 - i, now)));
 }

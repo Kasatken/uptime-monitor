@@ -1,11 +1,9 @@
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '../../components/ui/button';
-import { Card, CardHeader } from '../../components/ui/card';
 import { Segmented } from '../../components/ui/segmented';
 import { heartbeatUrl } from './presentation';
 
-/** A cron schedule that matches the monitor's expected period. */
 export function cronFor(intervalSeconds: number): string {
   const minutes = Math.round(intervalSeconds / 60);
   if (minutes < 60) return `*/${Math.max(minutes, 1)} * * * *`;
@@ -44,45 +42,51 @@ export function HeartbeatSnippet({
   };
 
   return (
-    <Card>
-      <CardHeader
-        title="Ping URL"
-        description="Call this URL at the end of your job. No ping in time → the monitor goes down."
-      />
-      <div className="space-y-4 p-4 sm:p-5">
-        <div className="flex items-center gap-2">
-          <code className="min-w-0 flex-1 truncate rounded-lg border border-line bg-surface-muted px-3 py-2 font-mono text-[13px]">
-            {url}
-          </code>
-          <Button onClick={() => copy(url, 'url')} aria-label="Copy ping URL">
-            {copied === 'url' ? <Check className="text-up" /> : <Copy />}
-            {copied === 'url' ? 'Copied' : 'Copy'}
-          </Button>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <Segmented
-              size="sm"
-              label="Snippet"
-              value={kind}
-              onChange={setKind}
-              options={[
-                { value: 'cron', label: 'crontab' },
-                { value: 'curl', label: 'curl' },
-                { value: 'systemd', label: 'systemd' },
-              ]}
-            />
-            <Button size="sm" variant="ghost" onClick={() => copy(snippet, 'snippet')}>
-              {copied === 'snippet' ? <Check className="text-up" /> : <Copy />}
-              {copied === 'snippet' ? 'Copied' : 'Copy snippet'}
-            </Button>
-          </div>
-          <pre className="overflow-x-auto rounded-lg bg-fg p-3 font-mono text-xs leading-relaxed text-canvas">
-            {snippet}
-          </pre>
-        </div>
+    <section className="space-y-5 rounded-card bg-mint p-6 text-on-color">
+      <div>
+        <h2 className="text-lg font-bold">Адрес для сигнала</h2>
+        <p className="mt-0.5 text-sm opacity-70">
+          Вызывайте его в конце задачи. Не пришёл вовремя — монитор перейдёт в «Не работает».
+        </p>
       </div>
-    </Card>
+
+      <div className="flex items-center gap-2">
+        <code className="min-w-0 flex-1 truncate rounded-2xl bg-white/60 px-4 py-3 font-mono text-[13px]">
+          {url}
+        </code>
+        <Button variant="night" onClick={() => copy(url, 'url')}>
+          {copied === 'url' ? <Check /> : <Copy />}
+          {copied === 'url' ? 'Скопировано' : 'Копировать'}
+        </Button>
+      </div>
+
+      <div className="space-y-3 rounded-3xl bg-night p-4 text-white">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Segmented
+            size="sm"
+            tone="dark"
+            label="Пример"
+            value={kind}
+            onChange={setKind}
+            options={[
+              { value: 'cron', label: 'crontab' },
+              { value: 'curl', label: 'curl' },
+              { value: 'systemd', label: 'systemd' },
+            ]}
+          />
+          <button
+            type="button"
+            onClick={() => copy(snippet, 'snippet')}
+            className="inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-white/70 hover:bg-white/10 hover:text-white"
+          >
+            {copied === 'snippet' ? <Check className="size-4" /> : <Copy className="size-4" />}
+            {copied === 'snippet' ? 'Скопировано' : 'Копировать'}
+          </button>
+        </div>
+        <pre className="overflow-x-auto px-1 font-mono text-xs leading-relaxed text-lime">
+          {snippet}
+        </pre>
+      </div>
+    </section>
   );
 }

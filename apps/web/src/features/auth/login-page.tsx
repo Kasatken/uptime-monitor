@@ -4,11 +4,10 @@ import { type FormEvent, useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { Logo } from '../../components/logo';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
 import { Field, Input } from '../../components/ui/field';
 import { sessionQuery, useLogin } from './auth.api';
 
-/** Only allow redirects inside the app, never to another origin. */
+// Only redirect inside the app, never to another origin ("//evil.com" is protocol-relative).
 const safeRedirect = (value: string | null) =>
   value?.startsWith('/') && !value.startsWith('//') ? value : '/admin';
 
@@ -28,44 +27,47 @@ export function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-dvh place-items-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex justify-center">
-          <Logo className="text-lg" />
+    <div className="grid min-h-dvh place-items-center px-4 py-10">
+      <div className="w-full max-w-sm space-y-4">
+        <div className="rounded-card bg-lime p-7 text-on-color">
+          <Logo />
+          <h1 className="mt-10 font-display text-3xl leading-tight font-semibold tracking-tight">
+            С возвращением
+          </h1>
+          <p className="mt-2 text-sm opacity-70">Войдите, чтобы управлять мониторами.</p>
         </div>
-        <Card className="p-6">
-          <h1 className="text-base font-semibold">Sign in</h1>
-          <p className="mt-1 text-sm text-fg-muted">
-            Enter the admin password from your server config.
-          </p>
 
-          <form onSubmit={onSubmit} className="mt-5 space-y-4">
-            <Field label="Password" error={login.error?.message}>
-              {(props) => (
-                <Input
-                  {...props}
-                  type="password"
-                  autoComplete="current-password"
-                  autoFocus
-                  required
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-              )}
-            </Field>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full justify-center"
-              loading={login.isPending}
-            >
-              Continue <ArrowRight />
-            </Button>
-          </form>
-        </Card>
-        <p className="mt-4 text-center text-sm">
-          <Link to="/" className="text-fg-muted hover:text-fg">
-            ← Public status page
+        <form onSubmit={onSubmit} className="space-y-4 rounded-card bg-surface p-7 shadow-card">
+          <Field
+            label="Пароль"
+            hint="Тот, что указан в ADMIN_PASSWORD на сервере"
+            error={login.error?.message}
+          >
+            {(props) => (
+              <Input
+                {...props}
+                type="password"
+                autoComplete="current-password"
+                autoFocus
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            )}
+          </Field>
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full justify-center"
+            loading={login.isPending}
+          >
+            Войти <ArrowRight />
+          </Button>
+        </form>
+
+        <p className="text-center text-sm">
+          <Link to="/" className="font-medium text-fg-muted hover:text-fg">
+            ← Публичная страница статуса
           </Link>
         </p>
       </div>

@@ -14,13 +14,9 @@ import {
 import { MonitorsRepository } from '../monitors/monitors.repository.js';
 import { CheckScheduler, type SchedulableMonitor } from './check-scheduler.js';
 
-/** Spread first runs over this window so a restart doesn't fire every check in the same tick. */
 const MAX_START_JITTER_MS = 10_000;
 
-/**
- * One chained setTimeout per monitor. setTimeout (not setInterval) guarantees a
- * slow check never overlaps with the next run of the same monitor.
- */
+// Chained setTimeout instead of setInterval: a slow check never overlaps the next run.
 @Injectable()
 export class InMemoryCheckScheduler
   extends CheckScheduler
@@ -52,7 +48,6 @@ export class InMemoryCheckScheduler
   @OnEvent(DomainEvent.MonitorSaved)
   handleMonitorSaved({ monitor }: MonitorSavedEvent) {
     if (monitor.status === 'paused') this.unschedule(monitor.id);
-    // Run right away so the user sees the result of a new or edited monitor immediately
     else this.schedule(monitor, { runImmediately: true });
   }
 

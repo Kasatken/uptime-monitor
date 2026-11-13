@@ -10,7 +10,6 @@ import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator';
 import pg from 'pg';
 import * as schema from './schema.js';
 
-/** Driver-agnostic type: repositories don't care whether it's PGlite or a real server. */
 export type Database = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 export const DATABASE = Symbol('DATABASE');
@@ -24,11 +23,7 @@ export interface DatabaseConnection {
 const MIGRATIONS_FOLDER = fileURLToPath(new URL('../../drizzle', import.meta.url));
 const logger = new Logger('Database');
 
-/**
- * With DATABASE_URL we talk to a regular Postgres server. Without it we run Postgres
- * in-process via PGlite (WASM), so the project starts with zero infrastructure.
- * Same schema, same SQL, same migrations.
- */
+// Without DATABASE_URL Postgres runs in-process (PGlite, WASM) – same schema and migrations.
 export async function connectDatabase(options: {
   url?: string;
   pgliteDir: string;
@@ -41,7 +36,6 @@ export async function connectDatabase(options: {
     return { db, close: () => pool.end() };
   }
 
-  // `memory://` is handy for tests
   if (!options.pgliteDir.startsWith('memory://')) {
     await mkdir(options.pgliteDir, { recursive: true });
   }

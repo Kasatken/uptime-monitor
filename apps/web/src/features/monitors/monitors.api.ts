@@ -10,7 +10,6 @@ import type {
 } from '@vigil/shared';
 import { api } from '../../lib/api-client';
 
-/** All cache keys in one place, so live updates and mutations hit the same entries. */
 export const monitorKeys = {
   overview: ['monitors', 'overview'] as const,
   detail: (id: string) => ['monitors', id] as const,
@@ -51,7 +50,6 @@ export const statsQuery = (id: string) =>
     queryFn: () => api<MonitorStatsDto>(`/monitors/${id}/stats`),
   });
 
-/** Writes a fresh monitor into every cache entry that shows it. */
 export function storeMonitor(queryClient: QueryClient, monitor: MonitorDto) {
   queryClient.setQueryData(monitorQuery(monitor.id).queryKey, monitor);
   queryClient.setQueryData(overviewQuery.queryKey, (list) => {
@@ -109,6 +107,5 @@ export function useDeleteMonitor() {
 export function useRunCheck(id: string) {
   return useMutation({
     mutationFn: () => api<CheckDto | null>(`/monitors/${id}/check`, { method: 'POST' }),
-    // the result itself arrives through the live socket and updates the caches
   });
 }

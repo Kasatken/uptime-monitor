@@ -18,7 +18,6 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   json?: unknown;
 }
 
-/** Tiny fetch wrapper: JSON in, JSON out, typed errors. Cookies are same-origin. */
 export async function api<T>(
   path: string,
   { json, headers, ...init }: RequestOptions = {},
@@ -38,7 +37,7 @@ export async function api<T>(
   if (!response.ok) {
     const message =
       response.status === 429
-        ? 'Too many attempts, try again in a minute'
+        ? 'Слишком много попыток, подождите минуту'
         : (body?.message ?? response.statusText);
     throw new ApiError(response.status, message, body?.issues ?? []);
   }

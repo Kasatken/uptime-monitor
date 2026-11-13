@@ -11,12 +11,8 @@ export interface MonitorTransition extends MonitorState {
 }
 
 /**
- * Decides the monitor status after a check.
- *
- * A single failed check doesn't mark a monitor down: it has to fail
- * `failureThreshold` times in a row. Until then the last known status is kept,
- * which filters out network blips and avoids "down/up" alert spam.
- * Recovery is immediate – one good check is enough.
+ * A monitor goes down only after `failureThreshold` failed checks in a row (filters out
+ * network blips); until then the last known status is kept. Recovery is immediate.
  */
 export function nextMonitorState(
   current: MonitorState,

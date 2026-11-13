@@ -5,11 +5,7 @@ import { Injectable } from '@nestjs/common';
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const CONNECT_TIMEOUT_MS = 5_000;
 
-/**
- * fetch() doesn't expose the peer certificate, so we open a separate TLS
- * connection to read its expiry date. Certificates change rarely, so the
- * result is cached for a few hours instead of probing on every check.
- */
+// fetch() doesn't expose the peer certificate, so its expiry is read over a separate TLS connection.
 @Injectable()
 export class TlsCertificateProbe {
   private readonly cache = new Map<string, { expiresAt: Date | null; fetchedAt: number }>();

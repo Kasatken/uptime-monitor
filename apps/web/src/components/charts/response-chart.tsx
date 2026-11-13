@@ -2,23 +2,17 @@ import type { CheckPointDto } from '@vigil/shared';
 import { type PointerEvent, useId, useMemo, useState } from 'react';
 import { cn } from '../../lib/cn';
 import { formatMs } from '../../lib/format';
-import { formatDateTime, formatTime } from '../../lib/time';
+import { formatDateTime, formatShortTime, formatTime } from '../../lib/time';
 import { useElementWidth } from '../../lib/use-element-width';
 import { STATUS_META } from '../status';
 import { linear, nearestIndex, niceCeil } from './scale';
 
-const HEIGHT = 200;
-const PAD = { top: 12, right: 12, bottom: 24, left: 48 };
-
+const HEIGHT = 220;
+const PAD = { top: 16, right: 12, bottom: 26, left: 52 };
 const DAY_MS = 86_400_000;
 
-/**
- * Response time over time. Gaps in the line are failed checks, also marked in red
- * on the time axis. Hover shows the nearest check.
- *
- * The time axis starts at the first point, not at the start of the selected range:
- * a monitor created 10 minutes ago should fill the chart, not be a sliver on the right.
- */
+// Drawn for a dark card. The time axis starts at the first point, not at the start of the
+// selected range, so a monitor created ten minutes ago fills the chart instead of a sliver.
 export function ResponseChart({ points }: { points: CheckPointDto[] }) {
   const [containerRef, width] = useElementWidth<HTMLDivElement>();
   const [hovered, setHovered] = useState<number | null>(null);
@@ -30,21 +24,21 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
     const times = points.map((p) => new Date(p.checkedAt).getTime());
     const start = times[0] as number;
     const end = Math.max(Date.now(), times.at(-1) as number);
+    const maxMs = niceCeil(Math.max(...points.map((p) => p.responseMs ?? 0)) * 1.1);
     const formatTick = (ms: number) => {
       const iso = new Date(ms).toISOString();
-      return end - start < DAY_MS ? formatTime(iso).slice(0, 5) : formatDateTime(iso);
+      return end - start < DAY_MS ? formatShortTime(iso) : formatDateTime(iso);
     };
-    const maxMs = niceCeil(Math.max(...points.map((p) => p.responseMs ?? 0)) * 1.1);
 
     const x = linear([start, end], [PAD.left, width - PAD.right]);
     const y = linear([0, maxMs], [HEIGHT - PAD.bottom, PAD.top]);
     const xs = times.map(x);
+    const baseline = y(0);
 
     let line = '';
     let area = '';
     let segmentStart: number | null = null;
     let lastX = 0;
-    const baseline = y(0);
 
     points.forEach((point, i) => {
       const px = xs[i] as number;
@@ -54,22 +48,25 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
         return;
       }
       const py = y(point.responseMs);
-      if (segmentStart === null) {
-        line += `M${px},${py}`;
-        area += `M${px},${py}`;
-        segmentStart = px;
-      } else {
-        line += `L${px},${py}`;
-        area += `L${px},${py}`;
-      }
+      const command = segmentStart === null ? 'M' : 'L';
+      line += `${command}${px},${py}`;
+      area += `${command}${px},${py}`;
+      segmentStart ??= px;
       lastX = px;
     });
     if (segmentStart !== null) area += `L${lastX},${baseline}L${segmentStart},${baseline}Z`;
 
-    const ticks = [0, maxMs / 2, maxMs];
-    const timeTicks = [start, (start + end) / 2, end];
-
-    return { x, y, xs, line, area, ticks, timeTicks, baseline, formatTick };
+    return {
+      x,
+      y,
+      xs,
+      line,
+      area,
+      baseline,
+      formatTick,
+      ticks: [0, maxMs / 2, maxMs],
+      timeTicks: [start, (start + end) / 2, end],
+    };
   }, [points, width]);
 
   const onPointerMove = (event: PointerEvent<SVGSVGElement>) => {
@@ -84,8 +81,8 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
   return (
     <div ref={containerRef} className="relative w-full" style={{ height: HEIGHT }}>
       {points.length === 0 ? (
-        <div className="grid h-full place-items-center text-sm text-fg-muted">
-          No checks in this period yet
+        <div className="grid h-full place-items-center text-sm text-white/50">
+          За этот период проверок ещё не было
         </div>
       ) : (
         chart && (
@@ -96,12 +93,12 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
             onPointerMove={onPointerMove}
             onPointerLeave={() => setHovered(null)}
             role="img"
-            aria-label={`Response time chart with ${points.length} checks`}
+            aria-label={`График времени ответа, проверок: ${points.length}`}
           >
             <defs>
               <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="var(--accent)" stopOpacity={0.22} />
-                <stop offset="100%" stopColor="var(--accent)" stopOpacity={0} />
+                <stop offset="0%" stopColor="#cbef5b" stopOpacity={0.35} />
+                <stop offset="100%" stopColor="#cbef5b" stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -112,15 +109,15 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
                   x2={width - PAD.right}
                   y1={chart.y(tick)}
                   y2={chart.y(tick)}
-                  className="stroke-line"
-                  strokeDasharray={tick === 0 ? undefined : '3 4'}
+                  stroke="rgb(255 255 255 / 0.1)"
+                  strokeDasharray={tick === 0 ? undefined : '3 5'}
                 />
                 <text
-                  x={PAD.left - 8}
+                  x={PAD.left - 10}
                   y={chart.y(tick)}
                   dy="0.32em"
                   textAnchor="end"
-                  className="fill-fg-subtle text-[10px] tabular"
+                  className="fill-white/45 text-[11px] tabular"
                 >
                   {formatMs(tick)}
                 </text>
@@ -133,9 +130,9 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
                 x={chart.x(tick)}
                 y={HEIGHT - 6}
                 textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'}
-                className="fill-fg-subtle text-[10px] tabular"
+                className="fill-white/45 text-[11px] tabular"
               >
-                {i === 2 ? 'now' : chart.formatTick(tick)}
+                {i === 2 ? 'сейчас' : chart.formatTick(tick)}
               </text>
             ))}
 
@@ -143,21 +140,20 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
             <path
               d={chart.line}
               fill="none"
-              stroke="var(--accent)"
-              strokeWidth={1.75}
+              stroke="#cbef5b"
+              strokeWidth={2.5}
+              strokeLinecap="round"
               strokeLinejoin="round"
             />
 
             {points.map((point, i) =>
               point.status === 'down' ? (
-                <rect
+                <circle
                   key={point.checkedAt}
-                  x={(chart.xs[i] as number) - 1.5}
-                  y={chart.baseline - 8}
-                  width={3}
-                  height={8}
-                  rx={1}
-                  className="fill-down"
+                  cx={chart.xs[i]}
+                  cy={chart.baseline - 5}
+                  r={4}
+                  fill="#f06446"
                 />
               ) : null,
             )}
@@ -169,16 +165,16 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
                   x2={hoveredX}
                   y1={PAD.top}
                   y2={chart.baseline}
-                  className="stroke-line-strong"
+                  stroke="rgb(255 255 255 / 0.25)"
                 />
                 {hoveredPoint.responseMs !== null && (
                   <circle
                     cx={hoveredX}
                     cy={chart.y(hoveredPoint.responseMs)}
-                    r={4}
-                    fill="var(--accent)"
-                    className="stroke-surface"
-                    strokeWidth={2}
+                    r={6}
+                    fill="#cbef5b"
+                    stroke="#161616"
+                    strokeWidth={3}
                   />
                 )}
               </g>
@@ -190,16 +186,14 @@ export function ResponseChart({ points }: { points: CheckPointDto[] }) {
       {hoveredPoint && hoveredX !== undefined && (
         <div
           className={cn(
-            'pointer-events-none absolute top-0 z-10 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-lg',
-            hoveredX > width / 2 ? '-translate-x-[calc(100%+12px)]' : 'translate-x-3',
+            'pointer-events-none absolute top-0 z-10 rounded-2xl bg-lime px-3.5 py-2 text-xs text-on-color shadow-xl',
+            hoveredX > width / 2 ? '-translate-x-[calc(100%+14px)]' : 'translate-x-3.5',
           )}
           style={{ left: hoveredX }}
         >
-          <div className="text-fg-muted tabular">{formatTime(hoveredPoint.checkedAt)}</div>
-          <div className="mt-0.5 flex items-center gap-2 font-medium">
-            <span className={STATUS_META[hoveredPoint.status].text}>
-              {STATUS_META[hoveredPoint.status].label}
-            </span>
+          <div className="opacity-70 tabular">{formatTime(hoveredPoint.checkedAt)}</div>
+          <div className="mt-0.5 flex items-center gap-2 font-semibold">
+            <span>{STATUS_META[hoveredPoint.status].label}</span>
             <span className="tabular">{formatMs(hoveredPoint.responseMs)}</span>
           </div>
         </div>

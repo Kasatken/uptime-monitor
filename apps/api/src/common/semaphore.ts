@@ -1,6 +1,3 @@
-/**
- * Limits how many async tasks run at the same time. Waiting tasks start in FIFO order.
- */
 export class Semaphore {
   private active = 0;
   private readonly waiting: Array<() => void> = [];

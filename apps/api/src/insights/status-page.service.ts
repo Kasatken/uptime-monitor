@@ -10,10 +10,6 @@ import { HISTORY_DAYS, StatsService } from './stats.service.js';
 
 const INCIDENT_HISTORY_DAYS = 14;
 
-/**
- * Builds the public page. Only explicitly public monitors are included, and only
- * safe fields: public name, status, numbers. No URLs, hosts or error messages.
- */
 @Injectable()
 export class StatusPageService {
   constructor(

@@ -46,10 +46,7 @@ export class MonitorsRepository {
     return row ?? null;
   }
 
-  /**
-   * Writes the result of a check, unless the monitor was paused while the check
-   * was running – in that case the pause wins and we return null.
-   */
+  // If the monitor was paused while the check was running, the pause wins.
   async applyCheckResult(id: string, patch: MonitorPatch): Promise<MonitorRecord | null> {
     const [row] = await this.db
       .update(monitors)

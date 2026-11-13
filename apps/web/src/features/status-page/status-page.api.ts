@@ -8,7 +8,6 @@ export const statusPageQuery = queryOptions({
   queryFn: () => api<StatusPageDto>('/status'),
 });
 
-/** Applies one live check to the cached page: status, latency and today's bar. */
 export function applyPublicCheck(page: StatusPageDto, event: PublicCheckEvent): StatusPageDto {
   const monitors = page.monitors.map((monitor) => {
     if (monitor.id !== event.monitorId) return monitor;

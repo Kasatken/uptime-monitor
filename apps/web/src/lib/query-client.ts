@@ -10,7 +10,6 @@ export const queryClient = new QueryClient({
   }),
   defaultOptions: {
     queries: {
-      // Live updates keep data fresh; refetches are mostly for reconnects and focus
       staleTime: 30_000,
       retry: (failureCount, error) => {
         if (error instanceof ApiError && error.status < 500) return false;

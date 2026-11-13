@@ -4,7 +4,6 @@ import { daysAgo } from '../common/time.js';
 import { AppConfig } from '../config/app-config.js';
 import { ChecksRepository } from './checks.repository.js';
 
-/** Raw checks are only needed for recent charts; daily rollups keep the long history. */
 @Injectable()
 export class RetentionService {
   private readonly logger = new Logger(RetentionService.name);

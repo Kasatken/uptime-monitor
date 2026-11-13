@@ -1,6 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 
-/** Width of an element, kept up to date with ResizeObserver. Used by the SVG charts. */
 export function useElementWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [width, setWidth] = useState(0);

@@ -90,7 +90,7 @@ describe('HttpChecker (against a local server)', () => {
   it('is down for an unexpected status', async () => {
     const outcome = await checker.check(http('/missing'), signal);
     expect(outcome).toMatchObject({ status: 'down', statusCode: 404 });
-    expect(outcome.message).toContain('got 404');
+    expect(outcome.message).toContain('получен 404');
   });
 
   it('checks the keyword in the body', async () => {
@@ -98,7 +98,7 @@ describe('HttpChecker (against a local server)', () => {
     const missing = await checker.check(http('/', { keyword: 'checkout' }), signal);
     expect(missing).toMatchObject({
       status: 'down',
-      message: 'Keyword "checkout" not found in response',
+      message: 'На странице нет текста «checkout»',
     });
   });
 
@@ -109,7 +109,7 @@ describe('HttpChecker (against a local server)', () => {
 
   it('is down on timeout', async () => {
     const outcome = await checker.check(http('/slow', { timeoutMs: 100 }), signal);
-    expect(outcome).toMatchObject({ status: 'down', message: 'Timed out after 100 ms' });
+    expect(outcome).toMatchObject({ status: 'down', message: 'Нет ответа за 100 мс' });
   });
 
   it('explains ports that fetch refuses to use', async () => {
@@ -122,7 +122,7 @@ describe('HttpChecker (against a local server)', () => {
       }),
       signal,
     );
-    expect(outcome.message).toMatch(/use a TCP monitor/);
+    expect(outcome.message).toMatch(/используйте TCP-монитор/);
   });
 
   it('describes connection errors', async () => {
@@ -135,7 +135,7 @@ describe('HttpChecker (against a local server)', () => {
       }),
       signal,
     );
-    expect(outcome).toMatchObject({ status: 'down', message: 'Connection refused' });
+    expect(outcome).toMatchObject({ status: 'down', message: 'Соединение отклонено' });
   });
 });
 
@@ -160,7 +160,7 @@ describe('TcpChecker', () => {
       monitorOf('tcp', { host: '127.0.0.1', port: 1, timeoutMs: 2000 }),
       signal,
     );
-    expect(outcome).toMatchObject({ status: 'down', message: 'Connection refused' });
+    expect(outcome).toMatchObject({ status: 'down', message: 'Соединение отклонено' });
   });
 });
 
@@ -190,12 +190,14 @@ describe('HeartbeatChecker', () => {
     );
     expect(await checker.check(monitor)).toMatchObject({
       status: 'down',
-      message: 'No ping for 10m',
+      message: 'Нет сигнала уже 10 мин',
     });
   });
 
   it('is down when the job never pinged at all', async () => {
     const monitor = monitorOf('heartbeat', { graceSeconds: 0 }, { createdAt: minutesAgo(5) });
-    expect(await checker.check(monitor)).toMatchObject({ message: 'No ping received yet' });
+    expect(await checker.check(monitor)).toMatchObject({
+      message: 'Сигнал ещё ни разу не приходил',
+    });
   });
 });

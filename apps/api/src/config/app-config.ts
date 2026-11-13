@@ -17,17 +17,13 @@ const envSchema = z.object({
   CHECK_CONCURRENCY: z.coerce.number().int().min(1).max(100).default(10),
   CHECK_RETENTION_DAYS: z.coerce.number().int().min(1).default(30),
 
-  STATUS_PAGE_TITLE: z.string().default('Vigil Status'),
+  STATUS_PAGE_TITLE: z.string().default('Статус сервисов'),
 
   TELEGRAM_BOT_TOKEN: optionalString,
   TELEGRAM_CHAT_ID: optionalString,
   ALERT_WEBHOOK_URL: z.preprocess(emptyToUndefined, z.url().optional()),
 });
 
-/**
- * Typed, validated config. Injected as a class so consumers don't depend on
- * string keys or `process.env` directly.
- */
 export class AppConfig {
   readonly isProduction: boolean;
   readonly port: number;

@@ -6,18 +6,19 @@ interface SegmentedProps<T extends string | number> {
   options: Array<{ value: T; label: string; count?: number }>;
   label: string;
   size?: 'sm' | 'md';
+  tone?: 'default' | 'dark';
 }
 
-/** Radio group styled as a pill switcher. Arrow keys work because it's real radios. */
 export function Segmented<T extends string | number>({
   value,
   onChange,
   options,
   label,
   size = 'md',
+  tone = 'default',
 }: SegmentedProps<T>) {
   return (
-    <fieldset className="inline-flex rounded-lg border border-line bg-surface-muted p-0.5">
+    <fieldset className="flex flex-wrap gap-2">
       <legend className="sr-only">{label}</legend>
       {options.map((option) => {
         const checked = option.value === value;
@@ -25,10 +26,16 @@ export function Segmented<T extends string | number>({
           <label
             key={option.value}
             className={cn(
-              'relative flex cursor-pointer items-center gap-1.5 rounded-md font-medium transition-colors select-none',
-              'has-focus-visible:outline-2 has-focus-visible:outline-accent',
-              size === 'sm' ? 'h-7 px-2.5 text-xs' : 'h-8 px-3 text-[13px]',
-              checked ? 'bg-surface text-fg shadow-card' : 'text-fg-muted hover:text-fg',
+              'relative flex cursor-pointer items-center gap-1.5 rounded-full font-semibold transition select-none',
+              'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-fg',
+              size === 'sm' ? 'h-8 px-3.5 text-xs' : 'h-10 px-4 text-sm',
+              tone === 'dark'
+                ? checked
+                  ? 'bg-lime text-on-color'
+                  : 'text-white/60 ring-1 ring-white/15 ring-inset hover:text-white'
+                : checked
+                  ? 'bg-ink text-ink-fg'
+                  : 'bg-surface text-fg ring-1 ring-line ring-inset hover:ring-line-strong',
             )}
           >
             <input
@@ -40,7 +47,9 @@ export function Segmented<T extends string | number>({
             />
             {option.label}
             {option.count !== undefined && (
-              <span className="tabular text-fg-subtle">{option.count}</span>
+              <span className={cn('tabular', checked ? 'opacity-70' : 'text-fg-subtle')}>
+                {option.count}
+              </span>
             )}
           </label>
         );

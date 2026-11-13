@@ -9,7 +9,7 @@ import {
   type MonitorDto,
   type MonitorType,
 } from '@vigil/shared';
-import { ChevronRight } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { Controller, get, type Path, useForm } from 'react-hook-form';
 import { Button } from '../../components/ui/button';
 import { Field, Input, Select } from '../../components/ui/field';
@@ -46,7 +46,6 @@ const DEFAULTS: { [K in MonitorType]: Extract<FormValues, { type: K }> } = {
     type: 'heartbeat',
     name: '',
     intervalSeconds: 3600,
-    // the grace period already absorbs late runs, no need to wait for a second miss
     failureThreshold: 1,
     isPublic: false,
     publicName: '',
@@ -65,7 +64,7 @@ const toFormValues = (monitor: MonitorDto) =>
     config: monitor.config,
   }) as FormValues;
 
-/** Empty input → undefined instead of NaN, so optional numbers stay optional. */
+// An empty number input would otherwise become NaN and fail validation of an optional field
 const optionalNumber = (value: unknown) =>
   value === '' || value === null || value === undefined ? undefined : Number(value);
 
@@ -96,7 +95,7 @@ export function MonitorForm({
   const type = watch('type');
   const isPublic = watch('isPublic');
   const method = watch('config.method' as Path<FormValues>);
-  // `get` because errors of a union type can't be accessed as errors.config.url
+  // errors of a union type can't be read as errors.config.url, hence `get`
   const error = (path: string) =>
     (get(formState.errors, path) as { message?: string } | undefined)?.message;
 
@@ -125,7 +124,7 @@ export function MonitorForm({
         }
       } else {
         form.setError('root', {
-          message: err instanceof Error ? err.message : 'Something went wrong',
+          message: err instanceof Error ? err.message : 'Что-то пошло не так',
         });
       }
     }
@@ -137,10 +136,10 @@ export function MonitorForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
-        <fieldset disabled={isEdit} className="space-y-2">
-          <legend className="mb-2 text-[13px] font-medium">Type</legend>
-          <div className="grid gap-2 sm:grid-cols-3">
+      <div className="flex-1 space-y-6 overflow-y-auto px-6 pb-6">
+        <fieldset disabled={isEdit}>
+          <legend className="mb-2 text-[13px] font-semibold">Что проверяем</legend>
+          <div className="grid gap-2.5 sm:grid-cols-3">
             {MONITOR_TYPES.map((value) => {
               const meta = TYPE_META[value];
               const checked = value === type;
@@ -148,10 +147,14 @@ export function MonitorForm({
                 <label
                   key={value}
                   className={cn(
-                    'flex cursor-pointer flex-col gap-1.5 rounded-lg border p-3 transition-colors has-focus-visible:outline-2 has-focus-visible:outline-accent',
-                    checked ? 'border-fg bg-surface-muted' : 'border-line hover:border-line-strong',
+                    'relative flex cursor-pointer flex-col gap-2 rounded-3xl p-4 text-on-color transition',
+                    'has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-fg',
+                    meta.fill,
+                    checked
+                      ? 'ring-2 ring-fg ring-offset-2 ring-offset-surface'
+                      : 'hover:brightness-95',
                     isEdit && !checked && 'hidden',
-                    isEdit && 'cursor-default sm:col-span-3',
+                    isEdit && 'cursor-default opacity-100 ring-0 sm:col-span-3',
                   )}
                 >
                   <input
@@ -160,31 +163,40 @@ export function MonitorForm({
                     checked={checked}
                     onChange={() => changeType(value)}
                   />
-                  <span className="flex items-center gap-2 text-sm font-medium">
-                    <meta.Icon className="size-4 text-fg-muted" aria-hidden />
-                    {meta.label}
+                  <span className="flex items-center justify-between">
+                    <span className="grid size-9 place-items-center rounded-full bg-white/55">
+                      <meta.Icon className="size-[18px]" aria-hidden />
+                    </span>
+                    {checked && !isEdit && (
+                      <span className="grid size-6 place-items-center rounded-full bg-night text-white">
+                        <Check className="size-3.5" aria-hidden />
+                      </span>
+                    )}
                   </span>
-                  <span className="text-xs leading-snug text-fg-muted">{meta.description}</span>
+                  <span className="text-sm font-bold">{meta.label}</span>
+                  <span className="text-xs leading-snug opacity-75 max-sm:hidden">
+                    {meta.description}
+                  </span>
                 </label>
               );
             })}
           </div>
         </fieldset>
 
-        <Field label="Name" error={error('name')}>
+        <Field label="Название" error={error('name')}>
           {(props) => (
             <Input
               {...props}
               {...register('name')}
-              placeholder="Shop frontend"
+              placeholder="Например, Интернет-магазин"
               autoFocus={!isEdit}
             />
           )}
         </Field>
 
         {type === 'http' && (
-          <div className="grid grid-cols-[1fr_auto] gap-3">
-            <Field label="URL" error={error('config.url')}>
+          <div className="grid grid-cols-[1fr_6.5rem] gap-3">
+            <Field label="Адрес" error={error('config.url')}>
               {(props) => (
                 <Input
                   {...props}
@@ -192,11 +204,11 @@ export function MonitorForm({
                   type="url"
                   inputMode="url"
                   placeholder="https://example.com/health"
-                  className="font-mono text-[13px]"
+                  className="font-mono text-[14px]"
                 />
               )}
             </Field>
-            <Field label="Method">
+            <Field label="Метод">
               {(props) => (
                 <Select {...props} {...register('config.method' as Path<FormValues>)}>
                   <option>GET</option>
@@ -209,17 +221,17 @@ export function MonitorForm({
 
         {type === 'tcp' && (
           <div className="grid grid-cols-[1fr_7rem] gap-3">
-            <Field label="Host" error={error('config.host')}>
+            <Field label="Хост" error={error('config.host')}>
               {(props) => (
                 <Input
                   {...props}
                   {...register('config.host' as Path<FormValues>)}
                   placeholder="vps.example.com"
-                  className="font-mono text-[13px]"
+                  className="font-mono text-[14px]"
                 />
               )}
             </Field>
-            <Field label="Port" error={error('config.port')}>
+            <Field label="Порт" error={error('config.port')}>
               {(props) => (
                 <Input
                   {...props}
@@ -235,15 +247,16 @@ export function MonitorForm({
         )}
 
         <div className="space-y-2">
-          <span className="block text-[13px] font-medium">
-            {type === 'heartbeat' ? 'Expected to ping every' : 'Check every'}
+          <span className="block text-[13px] font-semibold">
+            {type === 'heartbeat' ? 'Задача должна присылать сигнал каждые' : 'Проверять каждые'}
           </span>
           <Controller
             control={control}
             name="intervalSeconds"
             render={({ field }) => (
               <Segmented
-                label="Interval"
+                label="Интервал"
+                size="sm"
                 value={field.value}
                 onChange={field.onChange}
                 options={
@@ -261,8 +274,8 @@ export function MonitorForm({
 
         {type === 'heartbeat' && (
           <Field
-            label="Grace period (seconds)"
-            hint="How late a ping may be before we call it missed."
+            label="Допустимая задержка, секунд"
+            hint="Насколько сигнал может опоздать, прежде чем мы забьём тревогу."
             error={error('config.graceSeconds')}
           >
             {(props) => (
@@ -271,21 +284,21 @@ export function MonitorForm({
                 {...register('config.graceSeconds' as Path<FormValues>, { valueAsNumber: true })}
                 type="number"
                 min={0}
-                className="w-32 tabular"
+                className="w-36 tabular"
               />
             )}
           </Field>
         )}
 
-        <details className="group rounded-lg border border-line">
-          <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 text-[13px] font-medium select-none">
-            <ChevronRight className="size-4 text-fg-muted transition-transform group-open:rotate-90" />
-            Advanced settings
+        <details className="group rounded-3xl bg-surface-muted">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 text-sm font-semibold select-none">
+            Дополнительные настройки
+            <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
           </summary>
-          <div className="grid gap-4 border-t border-line p-3 sm:grid-cols-2">
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
             <Field
-              label="Confirm after"
-              hint="Failed checks in a row before alerting"
+              label="Тревога после"
+              hint="Сколько неудачных проверок подряд"
               error={error('failureThreshold')}
             >
               {(props) => (
@@ -295,27 +308,27 @@ export function MonitorForm({
                   type="number"
                   min={1}
                   max={10}
-                  className="tabular"
+                  className="bg-surface tabular"
                 />
               )}
             </Field>
 
             {type !== 'heartbeat' && (
               <>
-                <Field label="Timeout (ms)" error={error('config.timeoutMs')}>
+                <Field label="Таймаут, мс" error={error('config.timeoutMs')}>
                   {(props) => (
                     <Input
                       {...props}
                       {...register('config.timeoutMs' as Path<FormValues>, { valueAsNumber: true })}
                       type="number"
                       step={500}
-                      className="tabular"
+                      className="bg-surface tabular"
                     />
                   )}
                 </Field>
                 <Field
-                  label="Degraded above (ms)"
-                  hint="Optional. Slower responses show as degraded."
+                  label="Медленно, если дольше, мс"
+                  hint="Необязательно"
                   error={error('config.degradedAfterMs')}
                 >
                   {(props) => (
@@ -325,8 +338,8 @@ export function MonitorForm({
                         setValueAs: optionalNumber,
                       })}
                       type="number"
-                      placeholder="e.g. 1500"
-                      className="tabular"
+                      placeholder="1500"
+                      className="bg-surface tabular"
                     />
                   )}
                 </Field>
@@ -336,25 +349,21 @@ export function MonitorForm({
             {type === 'http' && (
               <>
                 <Field
-                  label="Expected status"
-                  hint="Codes or ranges: 200-299, 301"
+                  label="Ожидаемый код ответа"
+                  hint="Например, 200-299, 301"
                   error={error('config.expectedStatus')}
                 >
                   {(props) => (
                     <Input
                       {...props}
                       {...register('config.expectedStatus' as Path<FormValues>)}
-                      className="font-mono text-[13px]"
+                      className="bg-surface font-mono text-[14px]"
                     />
                   )}
                 </Field>
                 <Field
-                  label="Must contain"
-                  hint={
-                    method === 'HEAD'
-                      ? 'Not available for HEAD requests'
-                      : 'Optional text the page must include'
-                  }
+                  label="Страница должна содержать"
+                  hint={method === 'HEAD' ? 'Недоступно для HEAD-запросов' : 'Необязательно'}
                   error={error('config.keyword')}
                 >
                   {(props) => (
@@ -362,7 +371,8 @@ export function MonitorForm({
                       {...props}
                       {...register('config.keyword' as Path<FormValues>)}
                       disabled={method === 'HEAD'}
-                      placeholder="Add to cart"
+                      placeholder="В корзину"
+                      className="bg-surface"
                     />
                   )}
                 </Field>
@@ -371,42 +381,52 @@ export function MonitorForm({
           </div>
         </details>
 
-        <div className="space-y-3 rounded-lg border border-line p-3">
+        <div className="space-y-4 rounded-3xl bg-surface-muted p-5">
           <label className="flex cursor-pointer items-start justify-between gap-4">
             <span>
-              <span className="block text-[13px] font-medium">Show on public status page</span>
-              <span className="block text-xs text-fg-muted">
-                Visitors see the name, status and uptime – never the URL or errors.
+              <span className="block text-sm font-semibold">Показывать на странице статуса</span>
+              <span className="mt-0.5 block text-xs text-fg-muted">
+                Посетители увидят название, статус и аптайм. Адрес и ошибки — никогда.
               </span>
             </span>
             <input type="checkbox" {...register('isPublic')} className="peer sr-only" />
             <span
               aria-hidden
-              className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-up peer-focus-visible:outline-2 peer-focus-visible:outline-accent after:absolute after:top-0.5 after:left-0.5 after:size-4 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-4"
+              className="relative mt-0.5 h-7 w-12 shrink-0 rounded-full bg-line-strong transition-colors peer-checked:bg-lime peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-fg after:absolute after:top-1 after:left-1 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5"
             />
           </label>
           {isPublic && (
             <Field
-              label="Public name"
-              hint="Optional. Shown instead of the internal name."
+              label="Публичное название"
+              hint="Необязательно. Показывается вместо внутреннего."
               error={error('publicName')}
             >
-              {(props) => <Input {...props} {...register('publicName')} placeholder="Website" />}
+              {(props) => (
+                <Input
+                  {...props}
+                  {...register('publicName')}
+                  placeholder="Сайт"
+                  className="bg-surface"
+                />
+              )}
             </Field>
           )}
         </div>
 
         {formState.errors.root && (
-          <p role="alert" className="rounded-lg bg-down/10 px-3 py-2 text-sm text-down">
+          <p
+            role="alert"
+            className="rounded-2xl bg-tomato px-4 py-3 text-sm font-medium text-on-color"
+          >
             {formState.errors.root.message}
           </p>
         )}
       </div>
 
-      <footer className="flex justify-end gap-2 border-t border-line px-5 py-4">
-        <Button onClick={onCancel}>Cancel</Button>
+      <footer className="flex justify-end gap-2 border-t border-line px-6 py-4">
+        <Button onClick={onCancel}>Отмена</Button>
         <Button type="submit" variant="primary" loading={formState.isSubmitting}>
-          {isEdit ? 'Save changes' : 'Create monitor'}
+          {isEdit ? 'Сохранить' : 'Создать монитор'}
         </Button>
       </footer>
     </form>

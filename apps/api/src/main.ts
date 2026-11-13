@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { WsAdapter } from '@nestjs/platform-ws';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { AppConfig } from './config/app-config.js';
@@ -12,7 +13,8 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
   app.use(cookieParser());
-  // behind nginx/caddy in production: needed for correct client IPs in the rate limiter
+  app.useWebSocketAdapter(new WsAdapter(app));
+  // needed for correct client IPs in the rate limiter behind nginx/caddy
   app.set('trust proxy', 'loopback');
   app.enableShutdownHooks();
 

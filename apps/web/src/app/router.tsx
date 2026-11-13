@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { createBrowserRouter, Link, Outlet, useRouteError } from 'react-router';
 import { Toaster } from 'sonner';
 import { Button } from '../components/ui/button';
@@ -10,60 +11,75 @@ function RootLayout() {
   return (
     <>
       <Outlet />
-      <Toaster theme={theme} position="bottom-right" richColors closeButton />
+      <Toaster
+        theme={theme}
+        position="top-center"
+        richColors
+        closeButton
+        toastOptions={{ className: '!rounded-2xl !font-sans' }}
+      />
     </>
+  );
+}
+
+function CenteredMessage({
+  title,
+  text,
+  action,
+}: {
+  title: string;
+  text: string;
+  action: ReactNode;
+}) {
+  return (
+    <div className="grid min-h-dvh place-items-center px-4">
+      <div className="w-full max-w-md rounded-card bg-surface p-8 text-center shadow-card">
+        <h1 className="font-display text-2xl font-semibold tracking-tight">{title}</h1>
+        <p className="mt-3 text-fg-muted">{text}</p>
+        <div className="mt-6">{action}</div>
+      </div>
+    </div>
   );
 }
 
 function RouteError() {
   const error = useRouteError();
-  // After a deploy the old JS chunks are gone – a reload fetches the new ones
+  // After a deploy the old JS chunks are gone, a reload fetches the new ones
   const isStaleBundle =
     error instanceof TypeError &&
     /dynamically imported module|Failed to fetch/i.test(error.message);
 
   return (
-    <div className="grid min-h-dvh place-items-center px-4 text-center">
-      <div className="max-w-sm">
-        <h1 className="text-xl font-semibold">
-          {isStaleBundle ? 'A new version is available' : 'Something went wrong'}
-        </h1>
-        <p className="mt-2 text-sm text-fg-muted">
-          {isStaleBundle
-            ? 'Reload the page to get the latest version.'
-            : 'The page crashed. Reloading usually helps; your monitors keep running either way.'}
-        </p>
-        {import.meta.env.DEV && error instanceof Error && !isStaleBundle && (
-          <pre className="mt-4 overflow-auto rounded-lg bg-surface-muted p-3 text-left text-xs text-down">
-            {error.message}
-          </pre>
-        )}
-        <Button variant="primary" className="mt-6" onClick={() => window.location.reload()}>
-          Reload page
+    <CenteredMessage
+      title={isStaleBundle ? 'Вышла новая версия' : 'Что-то пошло не так'}
+      text={
+        isStaleBundle
+          ? 'Обновите страницу, чтобы загрузить её.'
+          : 'Страница сломалась. Обычно помогает перезагрузка, а мониторы продолжают работать.'
+      }
+      action={
+        <Button variant="primary" onClick={() => window.location.reload()}>
+          Обновить страницу
         </Button>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
 function NotFound() {
   return (
-    <div className="grid min-h-dvh place-items-center px-4 text-center">
-      <div>
-        <p className="text-sm font-medium text-fg-muted">404</p>
-        <h1 className="mt-1 text-xl font-semibold">Page not found</h1>
-        <Link to="/" className="mt-4 inline-block text-sm text-fg-muted hover:text-fg">
-          Go to the status page
+    <CenteredMessage
+      title="Страница не найдена"
+      text="Возможно, ссылка устарела."
+      action={
+        <Link to="/" className="font-semibold text-fg-muted hover:text-fg">
+          На страницу статуса
         </Link>
-      </div>
-    </div>
+      }
+    />
   );
 }
 
-/*
- * The public status page is in the main bundle so it loads instantly for visitors.
- * Everything admin (forms, charts, dialogs) is code-split and only fetched after login.
- */
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,

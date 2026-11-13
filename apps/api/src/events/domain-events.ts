@@ -3,10 +3,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { MonitorStatus } from '@vigil/shared';
 import type { CheckRecord, IncidentRecord, MonitorRecord } from '../database/schema.js';
 
-/**
- * Modules talk to each other through these events instead of calling each other:
- * the check runner doesn't know that incidents, alerts or websockets exist.
- */
 export const DomainEvent = {
   MonitorSaved: 'monitor.saved',
   MonitorRemoved: 'monitor.removed',
@@ -32,7 +28,6 @@ export interface CheckCompletedEvent {
 export interface MonitorStatusChangedEvent {
   monitor: MonitorRecord;
   previousStatus: MonitorStatus;
-  /** Message of the check that caused the change, if any. */
   cause: string | null;
 }
 
@@ -50,7 +45,6 @@ interface DomainEventPayloads {
   [DomainEvent.IncidentResolved]: IncidentEvent;
 }
 
-/** Thin typed wrapper so an event name can't be emitted with the wrong payload. */
 @Injectable()
 export class DomainEvents {
   constructor(private readonly emitter: EventEmitter2) {}

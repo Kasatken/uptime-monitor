@@ -9,10 +9,6 @@ import type { CheckOutcome, MonitorOf } from './checkers/checker.js';
 import { CheckerRegistry } from './checkers/checker.registry.js';
 import { ChecksRepository } from './checks.repository.js';
 
-/**
- * Executes checks. It knows *how* to run a check and how many may run at once;
- * *when* to run is the scheduler's job.
- */
 @Injectable()
 export class CheckRunner implements OnApplicationShutdown {
   private readonly logger = new Logger(CheckRunner.name);
@@ -30,10 +26,7 @@ export class CheckRunner implements OnApplicationShutdown {
     this.slots = new Semaphore(config.checks.concurrency);
   }
 
-  /**
-   * Runs a check for the monitor. If one is already running (a scheduled run and
-   * a "check now" click at the same time), the caller gets the same promise.
-   */
+  // A scheduled run and a "check now" click at the same time share one promise.
   run(monitorId: string): Promise<CheckRecord | null> {
     const running = this.inFlight.get(monitorId);
     if (running) return running;
@@ -94,9 +87,8 @@ export class CheckRunner implements OnApplicationShutdown {
       const checker = this.registry.get(monitor.type);
       return await checker.check(monitor as MonitorOf<typeof monitor.type>, this.shutdown.signal);
     } catch (error) {
-      // A bug in a checker must not look like the site being down silently
       this.logger.error(`Checker crashed for monitor ${monitor.id}`, error);
-      return { status: 'down', responseMs: null, message: 'Internal checker error' };
+      return { status: 'down', responseMs: null, message: 'Внутренняя ошибка проверки' };
     }
   }
 }

@@ -46,7 +46,7 @@ describe('CheckRunner', () => {
     const { runner, checks, events } = setup(async () => ({
       status: 'down',
       responseMs: null,
-      message: 'Connection refused',
+      message: 'Соединение отклонено',
     }));
 
     await runner.run('m1');
@@ -74,7 +74,7 @@ describe('CheckRunner', () => {
       (signal) =>
         new Promise((resolve) => {
           signal.addEventListener('abort', () =>
-            resolve({ status: 'down', responseMs: null, message: 'Check was cancelled' }),
+            resolve({ status: 'down', responseMs: null, message: 'Проверка отменена' }),
           );
         }),
     );
@@ -94,7 +94,7 @@ describe('CheckRunner', () => {
     await runner.run('m1');
     expect(monitors.applyCheckResult).toHaveBeenCalledWith(
       'm1',
-      expect.objectContaining({ status: 'down', lastMessage: 'Internal checker error' }),
+      expect.objectContaining({ status: 'down', lastMessage: 'Внутренняя ошибка проверки' }),
     );
   });
 });

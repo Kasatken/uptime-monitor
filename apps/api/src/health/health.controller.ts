@@ -4,7 +4,6 @@ import { Public } from '../auth/public.decorator.js';
 import { type Database, InjectDatabase } from '../database/database.js';
 import { CheckScheduler } from '../scheduler/check-scheduler.js';
 
-/** For Docker / load balancer health checks. Yes, the uptime monitor monitors itself. */
 @Public()
 @Controller('health')
 export class HealthController {

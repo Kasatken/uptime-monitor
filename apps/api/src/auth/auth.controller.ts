@@ -7,7 +7,7 @@ import { AppConfig } from '../config/app-config.js';
 import { AuthService, SESSION_COOKIE, SESSION_TTL_SECONDS } from './auth.service.js';
 import { Public } from './public.decorator.js';
 
-const loginSchema = z.object({ password: z.string().min(1, 'Password is required') });
+const loginSchema = z.object({ password: z.string().min(1, 'Введите пароль') });
 
 @Controller('auth')
 export class AuthController {
@@ -42,7 +42,6 @@ export class AuthController {
     res.clearCookie(SESSION_COOKIE, { path: '/' });
   }
 
-  /** 200 when the session cookie is valid, 401 otherwise (handled by the global guard). */
   @Get('session')
   session() {
     return { authenticated: true };

@@ -7,11 +7,6 @@ import {
 } from '../events/domain-events.js';
 import { IncidentsRepository } from './incidents.repository.js';
 
-/**
- * An incident is the period between a monitor going down and coming back.
- * Opened on the transition to `down`; resolved on any transition out of it
- * (recovery, or the owner pausing the monitor).
- */
 @Injectable()
 export class IncidentsService {
   constructor(

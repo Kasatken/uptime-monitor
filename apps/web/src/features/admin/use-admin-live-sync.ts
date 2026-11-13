@@ -19,10 +19,6 @@ const toPoint = ({ status, responseMs, checkedAt }: CheckDto): CheckPointDto => 
   checkedAt,
 });
 
-/**
- * Server pushes → query cache. Components just read queries and re-render;
- * none of them knows a socket exists.
- */
 export function useAdminLiveSync() {
   const queryClient = useQueryClient();
 
@@ -45,13 +41,11 @@ export function useAdminLiveSync() {
       checks ? [check, ...checks].slice(0, RECENT_CHECKS) : checks,
     );
 
-    // every cached chart range for this monitor
     queryClient.setQueriesData<CheckPointDto[]>(
       { queryKey: ['monitors', monitor.id, 'response-times'] },
       (points) => (points ? [...points, toPoint(check)] : points),
     );
 
-    // aggregates are cheaper to refetch than to recompute (only refetches if on screen)
     void queryClient.invalidateQueries({ queryKey: monitorKeys.stats(monitor.id) });
   });
 
@@ -63,7 +57,9 @@ export function useAdminLiveSync() {
   });
 
   useLiveEvent('incident:opened', (incident) => {
-    toast.error(`${incident.monitorName} is down`, { description: incident.cause ?? undefined });
+    toast.error(`${incident.monitorName} не работает`, {
+      description: incident.cause ?? undefined,
+    });
     void queryClient.invalidateQueries({ queryKey: incidentKeys.all });
   });
 
@@ -71,8 +67,8 @@ export function useAdminLiveSync() {
     const downtime = incident.resolvedAt
       ? new Date(incident.resolvedAt).getTime() - new Date(incident.startedAt).getTime()
       : 0;
-    toast.success(`${incident.monitorName} is back up`, {
-      description: `Was down for ${formatDuration(downtime)}`,
+    toast.success(`${incident.monitorName} снова работает`, {
+      description: `Простой: ${formatDuration(downtime)}`,
     });
     void queryClient.invalidateQueries({ queryKey: incidentKeys.all });
   });

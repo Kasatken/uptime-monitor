@@ -10,8 +10,7 @@ export default defineConfig({
     port: 5173,
     // Same origin in dev → the session cookie just works, no CORS setup
     proxy: {
-      '/api': API_URL,
-      '/socket.io': { target: API_URL, ws: true },
+      '/api': { target: API_URL, ws: true },
     },
   },
   build: {

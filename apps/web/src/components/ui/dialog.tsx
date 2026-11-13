@@ -12,10 +12,6 @@ interface DialogProps {
   variant?: 'sheet' | 'modal';
 }
 
-/**
- * Native <dialog>: focus trap, Esc to close, inert background and top-layer
- * stacking come from the browser, not from a library.
- */
 export function Dialog({
   open,
   onClose,
@@ -45,31 +41,25 @@ export function Dialog({
       className={cn(
         'bg-transparent p-0 text-fg backdrop:bg-transparent',
         variant === 'sheet'
-          ? 'sheet ml-auto h-dvh max-h-dvh w-full max-w-lg'
+          ? 'sheet ml-auto h-dvh max-h-dvh w-full max-w-xl p-0 sm:p-3'
           : 'm-auto w-[calc(100%-2rem)] max-w-md',
       )}
     >
       {open && (
         <div
           className={cn(
-            'flex flex-col border-line bg-surface shadow-2xl',
-            variant === 'sheet' ? 'h-full border-l' : 'rounded-xl border',
+            'flex flex-col bg-surface shadow-2xl',
+            variant === 'sheet' ? 'h-full sm:rounded-card' : 'rounded-card',
           )}
         >
-          <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+          <header className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
             <div>
-              <h2 id={titleId} className="text-base font-semibold">
+              <h2 id={titleId} className="font-display text-xl font-semibold tracking-tight">
                 {title}
               </h2>
-              {description && <p className="mt-1 text-sm text-fg-muted">{description}</p>}
+              {description && <p className="mt-1.5 text-sm text-fg-muted">{description}</p>}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="-mr-2 -mt-1"
-              onClick={onClose}
-              aria-label="Close"
-            >
+            <Button variant="secondary" size="iconSm" onClick={onClose} aria-label="Закрыть">
               <X />
             </Button>
           </header>

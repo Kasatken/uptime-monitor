@@ -16,8 +16,6 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
-// Column names are mapped to snake_case by `casing: 'snake_case'` (see database.module.ts).
-
 export const monitorType = pgEnum('monitor_type', MONITOR_TYPES);
 export const monitorStatus = pgEnum('monitor_status', MONITOR_STATUSES);
 export const checkStatus = pgEnum('check_status', CHECK_STATUSES);
@@ -28,14 +26,12 @@ export const monitors = pgTable('monitors', {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
   type: monitorType().notNull(),
-  /** Shape depends on `type`, validated by the zod schemas in @vigil/shared. */
   config: jsonb().$type<MonitorConfig>().notNull(),
   intervalSeconds: integer().notNull(),
   failureThreshold: integer().notNull().default(2),
   isPublic: boolean().notNull().default(false),
   publicName: text(),
 
-  // current state, updated after every check
   status: monitorStatus().notNull().default('pending'),
   failStreak: integer().notNull().default(0),
   lastCheckedAt: timestamptz(),
@@ -69,10 +65,7 @@ export const checks = pgTable(
   (t) => [index('checks_monitor_time_idx').on(t.monitorId, t.checkedAt.desc())],
 );
 
-/**
- * Pre-aggregated counters per monitor per UTC day. Raw checks are pruned after
- * CHECK_RETENTION_DAYS, these rows stay and power the 90-day bars cheaply.
- */
+// Daily counters survive the pruning of raw checks and power the 90-day history.
 export const monitorDailyStats = pgTable(
   'monitor_daily_stats',
   {

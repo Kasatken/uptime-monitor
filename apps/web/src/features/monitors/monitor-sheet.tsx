@@ -25,17 +25,16 @@ export function MonitorSheet({
       open={open}
       onClose={onClose}
       variant="sheet"
-      title={isEdit ? 'Edit monitor' : 'New monitor'}
-      description={isEdit ? undefined : 'The first check runs as soon as you save.'}
+      title={isEdit ? 'Настройки монитора' : 'Новый монитор'}
+      description={isEdit ? undefined : 'Первая проверка запустится сразу после сохранения.'}
     >
       <MonitorForm
-        // remount on type change from the outside, so defaults are fresh
         key={monitor?.id ?? initialType}
         monitor={monitor}
         initialType={initialType}
         onCancel={onClose}
         onSaved={(saved) => {
-          toast.success(isEdit ? 'Changes saved' : `${saved.name} is being monitored`);
+          toast.success(isEdit ? 'Изменения сохранены' : `«${saved.name}» теперь под присмотром`);
           onClose();
           if (!isEdit) onCreated?.(saved);
         }}

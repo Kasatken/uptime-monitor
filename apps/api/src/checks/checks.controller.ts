@@ -45,13 +45,12 @@ export class ChecksController {
     return this.checks.pointsSince(id, hoursAgo(clamp(hours, 1, 24 * 7)));
   }
 
-  /** "Check now" button. Returns the fresh check, or null for a heartbeat that isn't due yet. */
   @Post('check')
   @HttpCode(200)
   async runNow(@Param('id', ParseUUIDPipe) id: string): Promise<CheckDto | null> {
     const monitor = await this.monitors.findById(id);
-    if (!monitor) throw new NotFoundException('Monitor not found');
-    if (monitor.status === 'paused') throw new ConflictException('Monitor is paused');
+    if (!monitor) throw new NotFoundException('Монитор не найден');
+    if (monitor.status === 'paused') throw new ConflictException('Монитор на паузе');
 
     const check = await this.runner.run(id);
     return check ? toCheckDto(check) : null;

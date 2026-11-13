@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { type Checker, type CheckOutcome, MonitorChecker, type MonitorOf } from './checker.js';
 import { describeNetworkError } from './network-errors.js';
 
-/** Opens a TCP connection and closes it right away. Good for SSH, databases, mail, game servers. */
 @MonitorChecker('tcp')
 @Injectable()
 export class TcpChecker implements Checker<'tcp'> {
@@ -22,7 +21,7 @@ export class TcpChecker implements Checker<'tcp'> {
       return {
         status: 'degraded',
         responseMs,
-        message: `Slow connect: ${responseMs} ms (limit ${degradedAfterMs} ms)`,
+        message: `Медленное подключение: ${responseMs} мс при пороге ${degradedAfterMs} мс`,
       };
     }
     return { status: 'up', responseMs };

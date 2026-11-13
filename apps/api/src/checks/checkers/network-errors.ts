@@ -1,19 +1,19 @@
 const KNOWN_CODES: Record<string, string> = {
-  ENOTFOUND: 'DNS lookup failed',
-  EAI_AGAIN: 'DNS lookup timed out',
-  ECONNREFUSED: 'Connection refused',
-  ECONNRESET: 'Connection reset by peer',
-  ETIMEDOUT: 'Connection timed out',
-  EHOSTUNREACH: 'Host unreachable',
-  ENETUNREACH: 'Network unreachable',
-  CERT_HAS_EXPIRED: 'SSL certificate has expired',
-  DEPTH_ZERO_SELF_SIGNED_CERT: 'Self-signed SSL certificate',
-  SELF_SIGNED_CERT_IN_CHAIN: 'Self-signed certificate in chain',
-  UNABLE_TO_VERIFY_LEAF_SIGNATURE: 'Unable to verify SSL certificate',
-  ERR_TLS_CERT_ALTNAME_INVALID: 'SSL certificate does not match host name',
-  UND_ERR_CONNECT_TIMEOUT: 'Connection timed out',
-  UND_ERR_HEADERS_TIMEOUT: 'Server did not send headers in time',
-  UND_ERR_SOCKET: 'Socket closed unexpectedly',
+  ENOTFOUND: 'Домен не найден (DNS)',
+  EAI_AGAIN: 'DNS не ответил вовремя',
+  ECONNREFUSED: 'Соединение отклонено',
+  ECONNRESET: 'Соединение сброшено сервером',
+  ETIMEDOUT: 'Не удалось подключиться вовремя',
+  EHOSTUNREACH: 'Хост недоступен',
+  ENETUNREACH: 'Сеть недоступна',
+  CERT_HAS_EXPIRED: 'SSL-сертификат истёк',
+  DEPTH_ZERO_SELF_SIGNED_CERT: 'Самоподписанный SSL-сертификат',
+  SELF_SIGNED_CERT_IN_CHAIN: 'Самоподписанный сертификат в цепочке',
+  UNABLE_TO_VERIFY_LEAF_SIGNATURE: 'Не удалось проверить SSL-сертификат',
+  ERR_TLS_CERT_ALTNAME_INVALID: 'SSL-сертификат выдан для другого домена',
+  UND_ERR_CONNECT_TIMEOUT: 'Не удалось подключиться вовремя',
+  UND_ERR_HEADERS_TIMEOUT: 'Сервер не ответил вовремя',
+  UND_ERR_SOCKET: 'Соединение неожиданно закрылось',
 };
 
 interface ErrorLike {
@@ -26,23 +26,19 @@ interface ErrorLike {
 const asErrorLike = (value: unknown): ErrorLike =>
   typeof value === 'object' && value !== null ? (value as ErrorLike) : {};
 
-/**
- * fetch() and net.Socket fail with deeply nested, inconsistent errors
- * ("fetch failed" → cause → code). Turn them into one readable line.
- */
 export function describeNetworkError(error: unknown, timeoutMs: number): string {
   let current = asErrorLike(error);
 
-  // Walk down the `cause` chain until we find something meaningful
   for (let depth = 0; depth < 4; depth++) {
-    if (current.name === 'TimeoutError') return `Timed out after ${timeoutMs} ms`;
+    if (current.name === 'TimeoutError') return `Нет ответа за ${timeoutMs} мс`;
     if (current.code && KNOWN_CODES[current.code]) return KNOWN_CODES[current.code] as string;
     // fetch() refuses ports from the Fetch spec blocklist (1, 25, 6000, 10080...)
-    if (current.message === 'bad port') return 'Port is blocked for HTTP checks, use a TCP monitor';
+    if (current.message === 'bad port')
+      return 'Этот порт запрещён для HTTP-проверок, используйте TCP-монитор';
     if (!current.cause) break;
     current = asErrorLike(current.cause);
   }
 
-  if (current.name === 'AbortError') return 'Check was cancelled';
-  return current.code ?? current.message ?? 'Unknown network error';
+  if (current.name === 'AbortError') return 'Проверка отменена';
+  return current.code ?? current.message ?? 'Неизвестная сетевая ошибка';
 }

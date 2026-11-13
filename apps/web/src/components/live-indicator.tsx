@@ -1,17 +1,18 @@
 import { cn } from '../lib/cn';
 import { useLive } from '../live/live-provider';
 
-const LABELS = { live: 'Live', connecting: 'Connecting…', offline: 'Offline' } as const;
+const LABELS = { live: 'Онлайн', connecting: 'Подключение…', offline: 'Нет связи' } as const;
 
-/** Tells the viewer whether what they see is updating by itself. */
 export function LiveIndicator({ className }: { className?: string }) {
   const { state } = useLive();
   return (
     <span
       role="status"
-      title={state === 'live' ? 'Updates arrive in real time' : 'Trying to reconnect'}
+      title={
+        state === 'live' ? 'Данные обновляются в реальном времени' : 'Пробуем переподключиться'
+      }
       className={cn(
-        'inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 text-xs font-medium text-fg-muted',
+        'inline-flex h-9 items-center gap-2 rounded-full bg-surface px-3.5 max-sm:px-3 text-[13px] font-semibold text-fg shadow-card',
         className,
       )}
     >
@@ -26,7 +27,7 @@ export function LiveIndicator({ className }: { className?: string }) {
           )}
         />
       </span>
-      {LABELS[state]}
+      <span className="max-sm:sr-only">{LABELS[state]}</span>
     </span>
   );
 }

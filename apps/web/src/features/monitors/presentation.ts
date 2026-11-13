@@ -3,22 +3,25 @@ import { Globe, HeartPulse, type LucideIcon, Server } from 'lucide-react';
 
 export const TYPE_META: Record<
   MonitorType,
-  { label: string; Icon: LucideIcon; description: string }
+  { label: string; Icon: LucideIcon; description: string; fill: string }
 > = {
   http: {
-    label: 'HTTP(S)',
+    label: 'Сайт или API',
     Icon: Globe,
-    description: 'Website or API endpoint. Checks status code, keyword and SSL expiry.',
+    description: 'Проверяет код ответа, текст на странице и срок SSL-сертификата.',
+    fill: 'bg-lavender',
   },
   tcp: {
-    label: 'TCP port',
+    label: 'TCP-порт',
     Icon: Server,
-    description: 'Any port on a server: SSH, database, mail, game server.',
+    description: 'Любой порт на сервере: SSH, база данных, почта, игровой сервер.',
+    fill: 'bg-mint',
   },
   heartbeat: {
-    label: 'Heartbeat',
+    label: 'Cron-задача',
     Icon: HeartPulse,
-    description: 'Your cron job or script pings us. Alerts when it stops.',
+    description: 'Ваш скрипт сам присылает сигнал. Пропал сигнал — придёт тревога.',
+    fill: 'bg-pink',
   },
 };
 
@@ -29,7 +32,7 @@ export function describeTarget(monitor: MonitorDto): string {
     case 'tcp':
       return `${monitor.config.host}:${monitor.config.port}`;
     case 'heartbeat':
-      return 'Heartbeat';
+      return 'Ждёт сигнал';
   }
 }
 

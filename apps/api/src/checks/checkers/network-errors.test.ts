@@ -6,12 +6,12 @@ describe('describeNetworkError', () => {
     const error = new TypeError('fetch failed', {
       cause: Object.assign(new Error('getaddrinfo ENOTFOUND nope.invalid'), { code: 'ENOTFOUND' }),
     });
-    expect(describeNetworkError(error, 5000)).toBe('DNS lookup failed');
+    expect(describeNetworkError(error, 5000)).toBe('Домен не найден (DNS)');
   });
 
   it('reports timeouts with the configured limit', () => {
     const error = new DOMException('The operation timed out', 'TimeoutError');
-    expect(describeNetworkError(error, 3000)).toBe('Timed out after 3000 ms');
+    expect(describeNetworkError(error, 3000)).toBe('Нет ответа за 3000 мс');
   });
 
   it('finds a timeout wrapped into an AbortError (net.Socket)', () => {
@@ -19,13 +19,13 @@ describe('describeNetworkError', () => {
       name: 'AbortError',
       cause: new DOMException('timed out', 'TimeoutError'),
     });
-    expect(describeNetworkError(error, 1000)).toBe('Timed out after 1000 ms');
+    expect(describeNetworkError(error, 1000)).toBe('Нет ответа за 1000 мс');
   });
 
   it('falls back to the raw code or message', () => {
     expect(describeNetworkError(Object.assign(new Error('x'), { code: 'EWEIRD' }), 1)).toBe(
       'EWEIRD',
     );
-    expect(describeNetworkError('nonsense', 1)).toBe('Unknown network error');
+    expect(describeNetworkError('nonsense', 1)).toBe('Неизвестная сетевая ошибка');
   });
 });

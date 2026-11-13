@@ -2,7 +2,7 @@ import type { CheckDto, CheckStatus } from './check.js';
 import type { IncidentDto } from './incident.js';
 import type { MonitorDto, MonitorStatus } from './monitor.js';
 
-export const LIVE_NAMESPACE = '/live';
+export const LIVE_PATH = '/api/live';
 
 export interface PublicCheckEvent {
   monitorId: string;
@@ -13,20 +13,22 @@ export interface PublicCheckEvent {
 }
 
 /**
- * Typed contract for Socket.IO. Admin events go to authenticated sockets only,
- * `status:*` events are safe for the public page (no URLs, no error details).
+ * Everything the server can push. `monitor:*` and `incident:*` go to signed-in
+ * sockets only; `status:*` is safe for the public page (no URLs, no error details).
  */
-export interface ServerToClientEvents {
-  'monitor:checked': (payload: { monitor: MonitorDto; check: CheckDto }) => void;
-  'monitor:saved': (monitor: MonitorDto) => void;
-  'monitor:removed': (payload: { id: string }) => void;
-  'incident:opened': (incident: IncidentDto) => void;
-  'incident:resolved': (incident: IncidentDto) => void;
-
-  'status:checked': (payload: PublicCheckEvent) => void;
-  /** Something structural changed (status, incident, visibility) – refetch the page. */
-  'status:invalidated': () => void;
+export interface LiveEvents {
+  'monitor:checked': { monitor: MonitorDto; check: CheckDto };
+  'monitor:saved': MonitorDto;
+  'monitor:removed': { id: string };
+  'incident:opened': IncidentDto;
+  'incident:resolved': IncidentDto;
+  'status:checked': PublicCheckEvent;
+  'status:invalidated': null;
 }
 
-// biome-ignore lint/complexity/noBannedTypes: no client-to-server events yet
-export type ClientToServerEvents = {};
+export type LiveEventType = keyof LiveEvents;
+
+/** One frame on the wire: JSON `{ type, data }`, discriminated by `type`. */
+export type LiveMessage = {
+  [K in LiveEventType]: { type: K; data: LiveEvents[K] };
+}[LiveEventType];

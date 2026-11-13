@@ -11,10 +11,6 @@ export function toDailyUptime(row: DailyStatsRow): DailyUptimeDto {
   };
 }
 
-/**
- * Groups rollup rows per monitor and fills missing days, so the UI always gets
- * one entry per calendar day ("no data" is a gray bar, not a gap).
- */
 export function buildDailySeries(
   monitorIds: string[],
   rows: DailyStatsRow[],
@@ -35,7 +31,6 @@ export function buildDailySeries(
   );
 }
 
-/** Uptime over several days, weighted by the number of checks per day. */
 export function aggregateUptime(days: DailyUptimeDto[]): number | null {
   let total = 0;
   let up = 0;

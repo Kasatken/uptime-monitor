@@ -12,7 +12,6 @@ export type DailyStatsRow = typeof monitorDailyStats.$inferSelect;
 export class ChecksRepository {
   constructor(@InjectDatabase() private readonly db: Database) {}
 
-  /** Stores a check and bumps the daily counters in one transaction. */
   record(monitorId: string, outcome: CheckOutcome, checkedAt: Date): Promise<CheckRecord> {
     const isDown = outcome.status === 'down';
     const hasResponseTime = outcome.responseMs !== null;
@@ -73,10 +72,7 @@ export class ChecksRepository {
     return rows.map((row) => ({ ...row, checkedAt: row.checkedAt.toISOString() }));
   }
 
-  /**
-   * Last N checks for every monitor in one round trip. LATERAL lets Postgres use
-   * the (monitor_id, checked_at desc) index per monitor instead of ranking all rows.
-   */
+  // LATERAL uses the (monitor_id, checked_at desc) index per monitor instead of ranking every row.
   async recentPoints(monitorIds: string[], perMonitor: number) {
     const result = new Map<string, CheckPointDto[]>();
     if (monitorIds.length === 0) return result;
@@ -109,7 +105,6 @@ export class ChecksRepository {
     return result;
   }
 
-  /** Share of non-down checks since `since`, per monitor (0..1). */
   async uptimeSince(monitorIds: string[], since: Date): Promise<Map<string, number>> {
     if (monitorIds.length === 0) return new Map();
 

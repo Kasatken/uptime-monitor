@@ -1,4 +1,3 @@
-/** Rounds a max value up to a "nice" axis limit: 1, 2, 2.5, 5 × 10ⁿ. */
 export function niceCeil(value: number): number {
   if (value <= 0) return 1;
   const magnitude = 10 ** Math.floor(Math.log10(value));
@@ -15,7 +14,6 @@ export const linear =
     return r0 + ((value - d0) / (d1 - d0)) * (r1 - r0);
   };
 
-/** Index of the item whose x is closest to `target`. `xs` must be sorted. */
 export function nearestIndex(xs: number[], target: number): number {
   let low = 0;
   let high = xs.length - 1;

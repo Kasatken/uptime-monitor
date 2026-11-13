@@ -9,10 +9,6 @@ export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 14;
 
 const digest = (value: string) => createHash('sha256').update(value).digest();
 
-/**
- * Single-owner auth: one password from the environment, a signed JWT in an
- * httpOnly cookie. No user table needed for a personal monitor.
- */
 @Injectable()
 export class AuthService {
   constructor(
@@ -23,7 +19,7 @@ export class AuthService {
   async login(password: string): Promise<string> {
     // Compare digests so timingSafeEqual gets equal-length buffers and leaks nothing
     const valid = timingSafeEqual(digest(password), digest(this.config.adminPassword));
-    if (!valid) throw new UnauthorizedException('Wrong password');
+    if (!valid) throw new UnauthorizedException('Неверный пароль');
     return this.jwt.signAsync({ sub: 'owner' }, { expiresIn: SESSION_TTL_SECONDS });
   }
 
@@ -37,7 +33,6 @@ export class AuthService {
     }
   }
 
-  /** For WebSocket handshakes, where there is no cookie-parser. */
   isValidCookieHeader(header: string | undefined): boolean {
     if (!header) return false;
     return this.isValidSession(parseCookie(header)[SESSION_COOKIE]);

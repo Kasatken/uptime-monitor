@@ -4,11 +4,13 @@ Self-hosted uptime monitor for a handful of sites and servers. Workers check HTT
 
 I built it to watch my own three sites and a VPS. It runs with **zero infrastructure** in development (Postgres is embedded via PGlite) and switches to a real Postgres with one env variable.
 
-| Public status page                                      | Dashboard                                    |
-| ------------------------------------------------------- | -------------------------------------------- |
-| ![Status page](docs/screenshots/status-page-light.jpg)  | ![Dashboard](docs/screenshots/dashboard.jpg) |
-| **Monitor details**                                     | **Heartbeat monitor**                        |
-| ![Monitor details](docs/screenshots/monitor-detail.jpg) | ![Heartbeat](docs/screenshots/heartbeat.jpg) |
+The interface is in Russian.
+
+| Public status page                                    | Dashboard                                    |
+| ----------------------------------------------------- | -------------------------------------------- |
+| ![Status page](docs/screenshots/status-page.jpg)      | ![Dashboard](docs/screenshots/dashboard.jpg) |
+| **A monitor that is down**                            | **Mobile**                                   |
+| ![Monitor details](docs/screenshots/monitor-down.jpg) | ![Mobile](docs/screenshots/mobile.jpg)       |
 
 ## Features
 
@@ -18,16 +20,17 @@ I built it to watch my own three sites and a VPS. It runs with **zero infrastruc
 - **Live everything**: check results, sparklines, today's uptime bar and incidents update without refresh. On reconnect the app refetches what it missed.
 - **Public status page** that shows only what you mark public, under a public name — never URLs, hosts or error messages.
 - **Alerts** via Telegram and a generic JSON webhook (Slack/Discord compatible).
+- **Design**: bold cards, big display numbers, pill controls. Colour carries meaning: a monitor that is down turns its card tomato-red, one with problems turns yellow, healthy ones stay calm and white. Dark mode, mobile layout with a bottom tab bar.
 - Small things that matter: background tab title and favicon show the number of monitors down, `N` opens a new monitor, uptime is rounded _down_ (99.996% never shows as 100%), light/dark theme without flash, keyboard-accessible charts, `prefers-reduced-motion` respected.
 
 ## Tech stack
 
-|          |                                                                           |
-| -------- | ------------------------------------------------------------------------- |
-| Monorepo | npm workspaces, `@vigil/shared` contracts package                         |
-| Backend  | NestJS 12 (ESM), Drizzle ORM, PostgreSQL / PGlite, Socket.IO, zod         |
-| Frontend | React 19, React Router 8, TanStack Query, Tailwind CSS 4, react-hook-form |
-| Tooling  | TypeScript 7, Vite 8, Vitest, Biome                                       |
+|          |                                                                                                    |
+| -------- | -------------------------------------------------------------------------------------------------- |
+| Monorepo | npm workspaces, `@vigil/shared` contracts package                                                  |
+| Backend  | NestJS 12 (ESM), Drizzle ORM, PostgreSQL / PGlite, native WebSocket (`ws`), zod                    |
+| Frontend | React 19, React Router 8, TanStack Query, Tailwind CSS 4, react-hook-form, Onest + Unbounded fonts |
+| Tooling  | TypeScript 7, Vite 8, Vitest, Biome                                                                |
 
 ## Architecture
 
@@ -70,7 +73,14 @@ flowchart LR
 - Checks interrupted by our own shutdown are discarded, not recorded as outages.
 - A crashing checker reports `down` with "Internal checker error" instead of silently stopping.
 
-**Realtime without coupling the UI to sockets.** Socket events are written straight into the TanStack Query cache (`useAdminLiveSync`). Components only read queries. Admin vs. public data is split by Socket.IO rooms decided at handshake from the session cookie.
+**Realtime without coupling the UI to sockets.** Socket events are written straight into the TanStack Query cache (`useAdminLiveSync`). Components only read queries and don't know a socket exists.
+
+**Plain WebSocket, no Socket.IO.** One endpoint (`/api/live`), one JSON frame shape `{ type, data }` typed by a discriminated union in `@vigil/shared` (`LiveMessage`), so a wrong payload doesn't compile on either side. The parts a library would normally hide are small and explicit:
+
+- _Audiences_: the session cookie is checked once at the handshake; signed-in sockets get `monitor:*` / `incident:*`, everyone gets the sanitized `status:*` events.
+- _Keepalive_: the server pings every 30 s and terminates sockets that missed a pong (sleeping laptops, dropped Wi-Fi don't send a close frame).
+- _Reconnect_: `LiveConnection` on the client retries with exponential backoff and jitter (1 s → 30 s), retries at once on the browser `online` event, and refetches queries after reconnecting, because events sent while offline are lost.
+- No extra client library: the browser `WebSocket` is enough.
 
 **Auth for one owner.** Password from env, compared via `timingSafeEqual` on SHA-256 digests, JWT in an `httpOnly` `SameSite=Lax` cookie, rate-limited login. Everything is private by default; public routes opt out with `@Public()`.
 
@@ -85,12 +95,12 @@ apps/api/src/
   incidents/            open/resolve on status changes
   notifications/        Notifier interface, Telegram + webhook channels
   insights/             read side: dashboard overview, stats, public status page
-  realtime/             Socket.IO gateway (events → rooms)
+  realtime/             WebSocket gateway: audiences, keepalive
   auth/ config/ database/ events/ health/
 apps/web/src/
   features/             status-page, auth, admin, monitors, incidents
   components/           ui primitives, status visuals, SVG charts
-  live/                 socket provider + typed useLiveEvent hook
+  live/                 LiveConnection (reconnect/backoff) + typed useLiveEvent hook
   lib/                  api client, query client, time & format helpers
 ```
 
@@ -130,7 +140,7 @@ The dashboard generates this snippet (crontab, curl, systemd) with the right sch
 ## Roadmap
 
 - [ ] Docker Compose: Postgres + Redis + API + nginx serving the web build
-- [ ] BullMQ adapter for `CheckScheduler` (`upsertJobScheduler`) and separate worker processes; Socket.IO Redis adapter for multiple API instances
+- [ ] BullMQ adapter for `CheckScheduler` (`upsertJobScheduler`) and separate worker processes; Redis pub/sub fan-out for several API instances
 - [ ] Maintenance windows (suppress alerts, show on status page)
 - [ ] Notification channels configurable from the UI, per-monitor routing
 - [ ] Checks from several regions with quorum before declaring an outage

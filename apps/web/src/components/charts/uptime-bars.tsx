@@ -5,25 +5,22 @@ import { formatMs, formatUptime } from '../../lib/format';
 import { formatDay } from '../../lib/time';
 import { uptimeTone } from '../status';
 
-/** On narrow screens only the last 30 days are shown. */
 const MOBILE_DAYS = 30;
 
 function describeDay(day: DailyUptimeDto): string {
-  if (day.uptime === null) return `${formatDay(day.day)}: no data`;
-  const response = day.avgResponseMs !== null ? `, avg ${formatMs(day.avgResponseMs)}` : '';
-  return `${formatDay(day.day)}: ${formatUptime(day.uptime)} uptime${response}`;
+  if (day.uptime === null) return `${formatDay(day.day)}: нет данных`;
+  const response = day.avgResponseMs !== null ? `, в среднем ${formatMs(day.avgResponseMs)}` : '';
+  return `${formatDay(day.day)}: аптайм ${formatUptime(day.uptime)}${response}`;
 }
 
-/**
- * One bar per day. Semantically it's a slider over days: hover, or focus and use
- * the arrow keys / Home / End. Screen readers announce each day via aria-valuetext.
- */
+// Semantically a slider over days: screen readers announce each day through aria-valuetext.
 export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: string }) {
   const [active, setActive] = useState<number | null>(null);
   const [tooltipX, setTooltipX] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const barRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const last = days.length - 1;
+  const current = days[active ?? last];
 
   const activate = (index: number) => {
     const bar = barRefs.current[index];
@@ -33,19 +30,13 @@ export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: str
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
-    const current = active ?? last;
-    const next = {
-      ArrowLeft: current - 1,
-      ArrowRight: current + 1,
-      Home: 0,
-      End: last,
-    }[event.key];
+    const from = active ?? last;
+    const next = { ArrowLeft: from - 1, ArrowRight: from + 1, Home: 0, End: last }[event.key];
     if (next === undefined) return;
     event.preventDefault();
     activate(Math.min(Math.max(next, 0), last));
   };
 
-  // Find the bar under the pointer (bars hidden on mobile have zero width and are skipped)
   const onPointerMove = (event: PointerEvent) => {
     const x = event.clientX - (containerRef.current?.getBoundingClientRect().left ?? 0);
     const index = barRefs.current.findIndex(
@@ -56,8 +47,7 @@ export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: str
 
   const activeDay = active !== null ? days[active] : undefined;
   const containerWidth = containerRef.current?.clientWidth ?? 0;
-  // keep the tooltip inside the card near the edges
-  const align = tooltipX < 80 ? 'left' : tooltipX > containerWidth - 80 ? 'right' : 'center';
+  const align = tooltipX < 90 ? 'left' : tooltipX > containerWidth - 90 ? 'right' : 'center';
 
   return (
     <div className="relative">
@@ -68,16 +58,14 @@ export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: str
         aria-valuemin={0}
         aria-valuemax={last}
         aria-valuenow={active ?? last}
-        aria-valuetext={
-          days[active ?? last] ? describeDay(days[active ?? last] as DailyUptimeDto) : undefined
-        }
+        aria-valuetext={current ? describeDay(current) : undefined}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onPointerMove={onPointerMove}
         onPointerLeave={() => setActive(null)}
         onFocus={() => active === null && activate(last)}
         onBlur={() => setActive(null)}
-        className="flex h-8 touch-none items-stretch gap-[2px] rounded-sm"
+        className="flex h-10 touch-none items-stretch gap-[3px] rounded-full"
       >
         {days.map((day, index) => (
           <span
@@ -86,9 +74,9 @@ export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: str
               barRefs.current[index] = element;
             }}
             className={cn(
-              'flex-1 rounded-[2px] transition-opacity',
+              'flex-1 rounded-full transition-opacity',
               uptimeTone(day.uptime),
-              active !== null && active !== index && 'opacity-50',
+              active !== null && active !== index && 'opacity-40',
               index < days.length - MOBILE_DAYS && 'max-sm:hidden',
             )}
           />
@@ -98,19 +86,20 @@ export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: str
       {activeDay && (
         <div
           className={cn(
-            'pointer-events-none absolute bottom-full z-10 mb-2 w-max max-w-56 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-lg',
+            'pointer-events-none absolute bottom-full z-10 mb-2.5 w-max max-w-60 rounded-2xl bg-night px-3.5 py-2.5 text-xs text-white shadow-xl',
             align === 'center' && '-translate-x-1/2',
             align === 'right' && '-translate-x-full',
           )}
           style={{ left: align === 'left' ? 0 : align === 'right' ? '100%' : tooltipX }}
         >
-          <div className="font-medium">{formatDay(activeDay.day)}</div>
+          <div className="font-semibold">{formatDay(activeDay.day)}</div>
           {activeDay.uptime === null ? (
-            <div className="text-fg-muted">No data</div>
+            <div className="text-white/60">Нет данных</div>
           ) : (
-            <div className="mt-0.5 flex gap-3 text-fg-muted tabular">
+            <div className="mt-0.5 flex gap-3 text-white/60 tabular">
               <span>
-                <span className="text-fg">{formatUptime(activeDay.uptime)}</span> uptime
+                <span className="font-semibold text-lime">{formatUptime(activeDay.uptime)}</span>{' '}
+                аптайм
               </span>
               {activeDay.avgResponseMs !== null && <span>{formatMs(activeDay.avgResponseMs)}</span>}
             </div>
@@ -123,10 +112,10 @@ export function UptimeBars({ days, label }: { days: DailyUptimeDto[]; label: str
 
 export function UptimeBarsLegend({ days }: { days: number }) {
   return (
-    <div className="mt-2 flex justify-between text-[11px] text-fg-subtle">
-      <span className="max-sm:hidden">{days} days ago</span>
-      <span className="sm:hidden">{MOBILE_DAYS} days ago</span>
-      <span>Today</span>
+    <div className="mt-2.5 flex justify-between text-xs text-fg-subtle">
+      <span className="max-sm:hidden">{days} дней назад</span>
+      <span className="sm:hidden">{MOBILE_DAYS} дней назад</span>
+      <span>Сегодня</span>
     </div>
   );
 }

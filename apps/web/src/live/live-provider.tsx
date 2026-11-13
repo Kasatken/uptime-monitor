@@ -1,9 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  type ClientToServerEvents,
-  LIVE_NAMESPACE,
-  type ServerToClientEvents,
-} from '@vigil/shared';
+import { LIVE_PATH, type LiveEvents, type LiveEventType } from '@vigil/shared';
 import {
   createContext,
   type ReactNode,
@@ -12,91 +8,66 @@ import {
   useEffectEvent,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from 'react';
-import { io, type Socket } from 'socket.io-client';
+import { type ConnectionState, LiveConnection } from './live-connection';
 
-export type LiveSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
-export type ConnectionState = 'connecting' | 'live' | 'offline';
+export type { ConnectionState };
 
 interface LiveContextValue {
-  socket: LiveSocket;
+  connection: LiveConnection;
   state: ConnectionState;
-  /** Re-handshake, e.g. after login, so the server puts us into the admin room. */
-  reconnect: () => void;
 }
 
 const LiveContext = createContext<LiveContextValue | null>(null);
 
+const liveUrl = () => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}${LIVE_PATH}`;
+};
+
 export function LiveProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const [socket] = useState<LiveSocket>(() =>
-    io(LIVE_NAMESPACE, { transports: ['websocket'], withCredentials: true }),
+  const [connection] = useState(() => new LiveConnection({ url: liveUrl() }));
+  const state = useSyncExternalStore(
+    (notify) => connection.onStateChange(notify),
+    () => connection.state,
   );
-  const [state, setState] = useState<ConnectionState>('connecting');
 
   useEffect(() => {
-    let wasConnected = false;
-
-    const onConnect = () => {
-      setState('live');
+    let wasLive = false;
+    const unsubscribe = connection.onStateChange((next) => {
+      if (next !== 'live') return;
       // Events sent while we were offline are lost – catch up with one refetch
-      if (wasConnected) void queryClient.invalidateQueries();
-      wasConnected = true;
-    };
-    const onDisconnect = () => setState('offline');
+      if (wasLive) void queryClient.invalidateQueries();
+      wasLive = true;
+    });
+    const onOnline = () => connection.retryNow();
 
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-    socket.io.on('reconnect_attempt', () => setState('connecting'));
-    socket.io.on('reconnect_failed', onDisconnect);
-    if (socket.connected) onConnect();
-
+    window.addEventListener('online', onOnline);
+    connection.connect();
     return () => {
-      socket.off('connect', onConnect);
-      socket.off('disconnect', onDisconnect);
-      socket.io.off('reconnect_attempt');
-      socket.io.off('reconnect_failed');
+      unsubscribe();
+      window.removeEventListener('online', onOnline);
+      connection.close();
     };
-  }, [socket, queryClient]);
+  }, [connection, queryClient]);
 
-  const value = useMemo<LiveContextValue>(
-    () => ({
-      socket,
-      state,
-      reconnect: () => {
-        socket.disconnect();
-        socket.connect();
-      },
-    }),
-    [socket, state],
-  );
-
+  const value = useMemo(() => ({ connection, state }), [connection, state]);
   return <LiveContext value={value}>{children}</LiveContext>;
 }
 
-export function useLive(): LiveContextValue {
+export function useLive(): LiveContextValue & { reconnect: () => void } {
   const context = use(LiveContext);
   if (!context) throw new Error('useLive must be used inside <LiveProvider>');
-  return context;
+  return { ...context, reconnect: () => context.connection.reconnect() };
 }
 
-/** Subscribe to a typed server event. The handler always sees fresh props/state. */
-export function useLiveEvent<E extends keyof ServerToClientEvents>(
-  event: E,
-  handler: ServerToClientEvents[E],
+export function useLiveEvent<K extends LiveEventType>(
+  type: K,
+  handler: (data: LiveEvents[K]) => void,
 ) {
-  const { socket } = useLive();
-  const onEvent = useEffectEvent((...args: Parameters<ServerToClientEvents[E]>) => {
-    (handler as (...a: typeof args) => void)(...args);
-  });
-
-  useEffect(() => {
-    const listener = (...args: Parameters<ServerToClientEvents[E]>) => onEvent(...args);
-    // socket.io's overloads can't follow the generic E – the public signature above is typed
-    const untyped = socket as unknown as Socket;
-    untyped.on(event as string, listener);
-    return () => {
-      untyped.off(event as string, listener);
-    };
-  }, [socket, event]);
+  const { connection } = useLive();
+  const onEvent = useEffectEvent(handler);
+  useEffect(() => connection.on(type, (data) => onEvent(data)), [connection, type]);
 }

@@ -25,7 +25,6 @@ export function toMonitorDto(record: MonitorRecord): MonitorDto {
   } as MonitorDto;
 }
 
-/** Short human description of what is being checked, used in alerts. */
 export function describeTarget(record: MonitorRecord): string {
   const monitor = toMonitorDto(record);
   switch (monitor.type) {
@@ -34,7 +33,7 @@ export function describeTarget(record: MonitorRecord): string {
     case 'tcp':
       return `${monitor.config.host}:${monitor.config.port}`;
     case 'heartbeat':
-      return 'heartbeat';
+      return 'heartbeat-монитор';
   }
 }
 

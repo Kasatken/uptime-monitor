@@ -11,8 +11,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fontsource-variable/geist": "^5.3.0",
     "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource-variable/onest": "^5.3.1",
+    "@fontsource-variable/unbounded": "^5.3.0",
     "@hookform/resolvers": "^7.0.6",
     "@tanstack/react-query": "^5.107.1",
     "@vigil/shared": "*",
@@ -22,7 +23,6 @@
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.92.0",
     "react-router": "^8.5.1",
-    "socket.io-client": "^4.8.4",
     "sonner": "^2.0.8",
     "zod": "^4.6.7"
   },

@@ -27,10 +27,6 @@ export interface StatusPageDto {
   generatedAt: string;
 }
 
-/**
- * One rule for both server and client, so the banner never disagrees with the list.
- * Paused and pending monitors don't affect the overall status.
- */
 export function computeOverallStatus(statuses: readonly MonitorStatus[]): OverallStatus {
   const active = statuses.filter((s) => s !== 'paused' && s !== 'pending');
   if (active.length === 0) return 'unknown';

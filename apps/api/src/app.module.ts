@@ -16,15 +16,12 @@ import { SchedulerModule } from './scheduler/scheduler.module.js';
 
 @Module({
   imports: [
-    // infrastructure
     ConfigModule,
     DatabaseModule,
     EventsModule,
     ScheduleModule.forRoot(),
-    // limits are set per controller with @Throttle()
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 60 }]),
 
-    // features
     AuthModule,
     MonitorsModule,
     ChecksModule,

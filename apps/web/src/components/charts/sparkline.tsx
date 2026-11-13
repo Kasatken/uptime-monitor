@@ -1,23 +1,29 @@
 import type { CheckPointDto } from '@vigil/shared';
+import { cn } from '../../lib/cn';
 import { linear } from './scale';
 
 interface SparklineProps {
   points: CheckPointDto[];
   width?: number;
   height?: number;
+  onColor?: boolean;
 }
 
-/** Last N response times. Failed checks are drawn as red ticks on the baseline. */
-export function Sparkline({ points, width = 120, height = 32 }: SparklineProps) {
+export function Sparkline({ points, width = 120, height = 36, onColor = false }: SparklineProps) {
   if (points.length < 2) {
-    return <div style={{ width, height }} className="rounded bg-surface-muted/60" aria-hidden />;
+    return (
+      <div
+        style={{ width, height }}
+        className={cn('rounded-full', onColor ? 'bg-white/30' : 'bg-surface-muted')}
+        aria-hidden
+      />
+    );
   }
 
   const max = Math.max(1, ...points.map((p) => p.responseMs ?? 0));
-  const x = linear([0, points.length - 1], [1, width - 1]);
-  const y = linear([0, max], [height - 3, 3]);
+  const x = linear([0, points.length - 1], [2, width - 2]);
+  const y = linear([0, max], [height - 4, 4]);
 
-  // Break the line where a check has no response time (it failed)
   let path = '';
   let penDown = false;
   points.forEach((point, i) => {
@@ -40,20 +46,19 @@ export function Sparkline({ points, width = 120, height = 32 }: SparklineProps) 
       <path
         d={path}
         fill="none"
-        className="stroke-fg-subtle"
-        strokeWidth={1.5}
+        className={onColor ? 'stroke-on-color/60' : 'stroke-fg-subtle'}
+        strokeWidth={2}
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
       {points.map((point, i) =>
         point.status === 'down' ? (
-          <rect
+          <circle
             key={point.checkedAt}
-            x={x(i) - 1}
-            y={height - 6}
-            width={2}
-            height={6}
-            rx={1}
-            className="fill-down"
+            cx={x(i)}
+            cy={height - 3}
+            r={2.5}
+            className={onColor ? 'fill-on-color' : 'fill-down'}
           />
         ) : null,
       )}

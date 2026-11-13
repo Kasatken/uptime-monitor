@@ -11,7 +11,7 @@ function subscribe(onChange: () => void) {
   return () => observer.disconnect();
 }
 
-/** The initial value is applied by an inline script in index.html (no flash). */
+// The initial theme is applied by an inline script in index.html, so there is no flash.
 export function useTheme() {
   const theme = useSyncExternalStore(subscribe, read);
 
@@ -20,9 +20,7 @@ export function useTheme() {
     document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // private mode – the toggle still works for this visit
-    }
+    } catch {}
   }, []);
 
   return { theme, toggle };
