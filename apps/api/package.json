@@ -1,0 +1,46 @@
+{
+  "name": "@vigil/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "predev": "tsc -p tsconfig.build.json",
+    "dev": "concurrently -k -r \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"nodemon --quiet --watch dist --ext js --delay 0.5 --signal SIGTERM --exec 'node --env-file-if-exists=.env --enable-source-maps dist/main.js'\"",
+    "start": "node --env-file-if-exists=.env --enable-source-maps dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
+    "@nestjs/common": "^12.5.0",
+    "@nestjs/core": "^12.5.0",
+    "@nestjs/event-emitter": "^12.0.2",
+    "@nestjs/jwt": "^12.0.4",
+    "@nestjs/platform-express": "^12.5.0",
+    "@nestjs/platform-socket.io": "^12.5.0",
+    "@nestjs/schedule": "^12.0.3",
+    "@nestjs/throttler": "^6.7.1",
+    "@nestjs/websockets": "^12.5.0",
+    "@vigil/shared": "*",
+    "cookie": "^2.0.2",
+    "cookie-parser": "^1.4.7",
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.4",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.8",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.5",
+    "concurrently": "^10.0.7",
+    "drizzle-kit": "^0.31.11",
+    "nodemon": "^3.1.14",
+    "vitest": "^5.1.0"
+  }
+}

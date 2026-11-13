@@ -1,0 +1,28 @@
+{
+  "name": "vigil",
+  "private": true,
+  "description": "Self-hosted uptime monitor with a live dashboard and a public status page",
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "npm run build -w @vigil/shared && concurrently -k -n shared,api,web -c gray,blue,magenta \"npm:dev -w @vigil/shared\" \"npm:dev -w @vigil/api\" \"npm:dev -w @vigil/web\"",
+    "build": "npm run build --workspaces",
+    "start": "npm run start -w @vigil/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "biome check .",
+    "format": "biome check --write ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
+    "concurrently": "^10.0.7",
+    "typescript": "^7.0.2"
+  }
+}

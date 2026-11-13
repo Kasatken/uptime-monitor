@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# local data (PGlite database lives here in dev)
+.data/
+
+.env
+.env.local
+.DS_Store
+
+# editor / agent local config
+.claude/
