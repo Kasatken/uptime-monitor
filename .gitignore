@@ -9,6 +9,3 @@ coverage/
 .env
 .env.local
 .DS_Store
-
-# editor / agent local config
-.claude/

@@ -2,172 +2,174 @@
 
 [![CI](https://github.com/Kasatken/vigil-uptime/actions/workflows/ci.yml/badge.svg)](https://github.com/Kasatken/vigil-uptime/actions/workflows/ci.yml)
 
-Self-hosted uptime monitor for a handful of sites and servers. Workers check HTTP endpoints, TCP ports and cron-job heartbeats; a React dashboard and a public status page update live over WebSocket; alerts go to Telegram or any webhook.
+Мониторинг доступности для своих сайтов и серверов. Воркеры проверяют HTTP-адреса, TCP-порты и сигналы от cron-задач, панель управления и публичная страница статуса обновляются в реальном времени по WebSocket, уведомления приходят в Telegram или на любой вебхук.
 
-I built it to watch my own three sites and a VPS. It runs with **zero infrastructure** in development (Postgres is embedded via PGlite) and switches to a real Postgres with one env variable.
+Сделан, чтобы следить за моими тремя сайтами и VPS. Для разработки **не нужна никакая инфраструктура**: Postgres работает прямо внутри процесса (PGlite), а на настоящий Postgres приложение переключается одной переменной окружения.
 
-The interface is in Russian. Screenshots below use **synthetic demo data** (`npm run seed:demo`): 90 days of history with a few realistic outages and one monitor that is down right now.
+Скриншоты сделаны на **синтетических демо-данных** (`npm run seed:demo`): история за 90 дней с несколькими реалистичными сбоями и одним монитором, который не работает прямо сейчас.
 
-![Public status page](docs/screenshots/status-page.jpg)
+![Публичная страница статуса](docs/screenshots/status-page.jpg)
 
-| Dashboard                                                   | Monitor details                                                      |
-| ----------------------------------------------------------- | -------------------------------------------------------------------- |
-| ![Dashboard](docs/screenshots/dashboard.jpg)                | ![Monitor details](docs/screenshots/monitor-detail.jpg)              |
-| **Response time, 90-day history, live check log**           | **Incidents**                                                        |
-| ![Response time chart](docs/screenshots/response-chart.jpg) | ![Incidents](docs/screenshots/incidents.jpg)                         |
-| **Dark theme**                                              | **Status page: incident history**                                    |
-| ![Dark dashboard](docs/screenshots/dashboard-dark.jpg)      | ![Status page incidents](docs/screenshots/status-page-incidents.jpg) |
+| Панель управления                                     | Страница монитора                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------ |
+| ![Панель](docs/screenshots/dashboard.jpg)             | ![Страница монитора](docs/screenshots/monitor-detail.jpg)    |
+| **Время ответа, история за 90 дней, живой журнал**    | **Инциденты**                                                |
+| ![График ответа](docs/screenshots/response-chart.jpg) | ![Инциденты](docs/screenshots/incidents.jpg)                 |
+| **Тёмная тема**                                       | **Страница статуса: история сбоев**                          |
+| ![Тёмная тема](docs/screenshots/dashboard-dark.jpg)   | ![История сбоев](docs/screenshots/status-page-incidents.jpg) |
 
 <p align="center">
-  <img src="docs/screenshots/mobile-status.jpg" width="270" alt="Status page on a phone">
+  <img src="docs/screenshots/mobile-status.jpg" width="270" alt="Страница статуса на телефоне">
   &nbsp;&nbsp;
-  <img src="docs/screenshots/mobile-dashboard.jpg" width="270" alt="Dashboard on a phone">
+  <img src="docs/screenshots/mobile-dashboard.jpg" width="270" alt="Панель на телефоне">
 </p>
 
-## Features
+## Возможности
 
-- **Three monitor types**: HTTP(S) (status code ranges, keyword, slow-response threshold, SSL expiry), TCP port, and heartbeat (your cron job pings Vigil; silence means trouble).
-- **No alert spam**: a monitor goes down only after N failed checks in a row; recovery is immediate.
-- **Incidents** open and close automatically. The database itself guarantees one open incident per monitor.
-- **Live everything**: check results, sparklines, today's uptime bar and incidents update without refresh. On reconnect the app refetches what it missed.
-- **Public status page** that shows only what you mark public, under a public name — never URLs, hosts or error messages.
-- **Alerts** via Telegram and a generic JSON webhook (Slack/Discord compatible).
-- **Design**: bold cards, big display numbers, pill controls. Colour carries meaning: a monitor that is down turns its card tomato-red, one with problems turns yellow, healthy ones stay calm and white. Dark mode, mobile layout with a bottom tab bar.
-- Small things that matter: background tab title and favicon show the number of monitors down, `N` opens a new monitor, uptime is rounded _down_ (99.996% never shows as 100%), light/dark theme without flash, keyboard-accessible charts, `prefers-reduced-motion` respected.
+- **Три типа мониторов**: HTTP(S) (диапазоны кодов ответа, текст на странице, порог медленного ответа, срок SSL-сертификата), TCP-порт и heartbeat (cron-задача сама присылает сигнал; тишина означает проблему).
+- **Без ложных тревог**: монитор считается упавшим только после N неудачных проверок подряд, восстановление фиксируется сразу.
+- **Инциденты** открываются и закрываются сами. База данных гарантирует не больше одного открытого инцидента на монитор.
+- **Всё обновляется вживую**: результаты проверок, графики, сегодняшний столбик аптайма и инциденты появляются без перезагрузки. После обрыва связи приложение само догружает пропущенное.
+- **Публичная страница статуса** показывает только то, что вы отметили публичным, под публичным названием. Адреса, хосты и тексты ошибок посетители не видят никогда.
+- **Уведомления** в Telegram и на JSON-вебхук (совместим со Slack и Discord).
+- **Дизайн**: крупные карточки, большие цифры, кнопки-таблетки. Цвет несёт смысл: упавший монитор становится томатным, с проблемами — жёлтым, рабочие остаются спокойными белыми. Тёмная тема, мобильная версия с нижней панелью навигации.
+- Мелочи, которые важны: заголовок вкладки и иконка показывают число упавших мониторов, клавиша `N` открывает создание монитора, аптайм округляется _вниз_ (99,996% никогда не покажется как 100%), тема без мигания при загрузке, графики доступны с клавиатуры, учитывается `prefers-reduced-motion`.
 
-## Tech stack
+## Стек
 
-|          |                                                                                                    |
-| -------- | -------------------------------------------------------------------------------------------------- |
-| Monorepo | npm workspaces, `@vigil/shared` contracts package                                                  |
-| Backend  | NestJS 12 (ESM), Drizzle ORM, PostgreSQL / PGlite, native WebSocket (`ws`), zod                    |
-| Frontend | React 19, React Router 8, TanStack Query, Tailwind CSS 4, react-hook-form, Onest + Unbounded fonts |
-| Tooling  | TypeScript 7, Vite 8, Vitest, Biome                                                                |
+|             |                                                                                                     |
+| ----------- | --------------------------------------------------------------------------------------------------- |
+| Монорепо    | npm workspaces, пакет общих контрактов `@vigil/shared`                                              |
+| Бэкенд      | NestJS 12 (ESM), Drizzle ORM, PostgreSQL / PGlite, нативный WebSocket (`ws`), zod                   |
+| Фронтенд    | React 19, React Router 8, TanStack Query, Tailwind CSS 4, react-hook-form, шрифты Onest и Unbounded |
+| Инструменты | TypeScript 7, Vite 8, Vitest, Biome, GitHub Actions                                                 |
 
-## Architecture
+## Архитектура
 
 ```mermaid
 flowchart LR
-  subgraph API["NestJS process"]
-    S[Scheduler<br/><i>when</i>] -->|run id| R[CheckRunner<br/><i>how, how many</i>]
-    R --> C{{Checker registry}}
+  subgraph API["Процесс NestJS"]
+    S[Планировщик<br/><i>когда</i>] -->|id монитора| R[CheckRunner<br/><i>как и сколько</i>]
+    R --> C{{Реестр проверок}}
     C --> H[HTTP] & T[TCP] & B[Heartbeat]
-    R -->|CheckCompleted<br/>StatusChanged| E((Domain events))
-    E --> I[Incidents]
+    R -->|CheckCompleted<br/>StatusChanged| E((Доменные события))
+    E --> I[Инциденты]
     I -->|IncidentOpened/Resolved| E
-    E --> N[Notifications]
-    E --> G[Live gateway]
+    E --> N[Уведомления]
+    E --> G[WebSocket-шлюз]
     E --> S
   end
   R --> DB[(Postgres / PGlite)]
   I --> DB
-  G -- "admin room" --> D[Dashboard]
-  G -- "public room" --> P[Status page]
-  N --> TG[Telegram / Webhook]
+  G -- "только для админа" --> D[Панель]
+  G -- "публичные события" --> P[Страница статуса]
+  N --> TG[Telegram / Вебхук]
 ```
 
-### Decisions worth explaining
+### Решения, которые стоит объяснить
 
-**Modules talk through domain events, not through each other.** The check runner records a result and emits `check.completed` / `monitor.status-changed`. It has no idea that incidents, alerts or WebSockets exist. Adding, say, a Prometheus exporter is one new listener — no existing file changes. Events are typed (`DomainEvents.emit` won't compile with the wrong payload).
+**Модули общаются через доменные события, а не вызывают друг друга.** CheckRunner записывает результат и публикует `check.completed` / `monitor.status-changed`. Он ничего не знает про инциденты, уведомления и WebSocket. Добавить, например, экспорт метрик в Prometheus — это один новый слушатель без правок в существующем коде. События типизированы: `DomainEvents.emit` не скомпилируется с неправильными данными.
 
-**Checkers are strategies, discovered automatically.** Each monitor type is one class with `@MonitorChecker('http')`. `CheckerRegistry` finds them via Nest's `DiscoveryService`. A new type (DNS, ICMP, gRPC) = a zod schema in `shared` + one checker class.
+**Проверки — это стратегии, которые находятся автоматически.** Каждый тип монитора — один класс с декоратором `@MonitorChecker('http')`. `CheckerRegistry` находит их через `DiscoveryService` из Nest. Новый тип (DNS, ICMP, gRPC) — это zod-схема в `shared` и один класс проверки.
 
-**The scheduler is a port.** `CheckScheduler` is an abstract class; today it's bound to `InMemoryCheckScheduler` (chained `setTimeout` per monitor, start jitter, no overlapping runs). The runner owns concurrency (a semaphore) and dedupes parallel runs of the same monitor. Swapping in BullMQ for multiple worker processes is one class and one line in `SchedulerModule` — see the roadmap.
+**Планировщик — это порт.** `CheckScheduler` — абстрактный класс, сейчас к нему привязан `InMemoryCheckScheduler` (цепочка `setTimeout` на каждый монитор, случайная задержка при старте, проверки одного монитора не накладываются). Параллельностью управляет CheckRunner (семафор), он же склеивает одновременные запуски одного монитора. Переход на BullMQ с отдельными воркерами — это один класс и одна строка в `SchedulerModule`.
 
-**One validation source of truth.** zod schemas in `@vigil/shared` validate the API (`ZodValidationPipe`) _and_ the form (`zodResolver`). Server issues come back as `{ path, message }` and are mapped onto form fields, so even a server-only error lands under the right input.
+**Одна точка правды для валидации.** zod-схемы из `@vigil/shared` проверяют и API (`ZodValidationPipe`), и форму (`zodResolver`). Ошибки сервера приходят в виде `{ path, message }` и показываются под нужным полем формы.
 
-**Pre-aggregated uptime.** Every check bumps a per-monitor/per-UTC-day counter with an upsert in the same transaction. Raw checks are pruned after `CHECK_RETENTION_DAYS`; the 90-day bars and long-term uptime come from the rollups. The dashboard list loads sparklines for all monitors in one query with a `LATERAL` join that uses the `(monitor_id, checked_at desc)` index.
+**Аптайм считается заранее.** Каждая проверка в той же транзакции увеличивает счётчик за день (по UTC) через upsert. Сырые проверки удаляются через `CHECK_RETENTION_DAYS` дней, а 90-дневная история берётся из дневных счётчиков. Спарклайны для всех мониторов загружаются одним запросом с `LATERAL`-join, который использует индекс `(monitor_id, checked_at desc)`.
 
-**Correctness details.**
+**Детали корректности.**
 
-- Flap protection: `nextMonitorState()` is a pure, unit-tested state machine.
-- A pause wins over a check that was already running (`UPDATE ... WHERE status <> 'paused'`).
-- Checks interrupted by our own shutdown are discarded, not recorded as outages.
-- A crashing checker reports `down` with "Internal checker error" instead of silently stopping.
+- Защита от «дребезга»: `nextMonitorState()` — чистая функция состояний, покрытая тестами.
+- Пауза побеждает проверку, которая уже шла (`UPDATE ... WHERE status <> 'paused'`).
+- Проверки, прерванные остановкой самого сервера, отбрасываются, а не записываются как сбой.
+- Если проверка падает с ошибкой в коде, монитор получает статус `down` с текстом «Внутренняя ошибка проверки», а не молча перестаёт проверяться.
 
-**Realtime without coupling the UI to sockets.** Socket events are written straight into the TanStack Query cache (`useAdminLiveSync`). Components only read queries and don't know a socket exists.
+**Интерфейс не знает о сокетах.** События из WebSocket пишутся прямо в кэш TanStack Query (`useAdminLiveSync`). Компоненты только читают запросы.
 
-**Plain WebSocket, no Socket.IO.** One endpoint (`/api/live`), one JSON frame shape `{ type, data }` typed by a discriminated union in `@vigil/shared` (`LiveMessage`), so a wrong payload doesn't compile on either side. The parts a library would normally hide are small and explicit:
+**Чистый WebSocket, без Socket.IO.** Один адрес (`/api/live`), одна форма сообщения `{ type, data }`, типизированная размеченным объединением `LiveMessage` в `@vigil/shared`: неправильные данные не скомпилируются ни на сервере, ни на клиенте. То, что обычно прячет библиотека, здесь небольшое и явное:
 
-- _Audiences_: the session cookie is checked once at the handshake; signed-in sockets get `monitor:*` / `incident:*`, everyone gets the sanitized `status:*` events.
-- _Keepalive_: the server pings every 30 s and terminates sockets that missed a pong (sleeping laptops, dropped Wi-Fi don't send a close frame).
-- _Reconnect_: `LiveConnection` on the client retries with exponential backoff and jitter (1 s → 30 s), retries at once on the browser `online` event, and refetches queries after reconnecting, because events sent while offline are lost.
-- No extra client library: the browser `WebSocket` is enough.
+- _Кому что отправлять_: cookie сессии проверяется один раз при подключении. Вошедшие получают `monitor:*` и `incident:*`, все остальные — только безопасные `status:*`.
+- _Проверка живых соединений_: сервер раз в 30 секунд шлёт ping и закрывает сокеты, которые не ответили (уснувший ноутбук или пропавший Wi-Fi не присылают сигнал закрытия).
+- _Переподключение_: `LiveConnection` на клиенте повторяет попытки с растущей паузой и случайным разбросом (от 1 до 30 секунд), сразу переподключается, когда браузер сообщает о появлении сети, и после переподключения обновляет данные, потому что сообщения за время обрыва потеряны.
+- Никаких клиентских библиотек: хватает встроенного в браузер `WebSocket`.
 
-**Auth for one owner.** Password from env, compared via `timingSafeEqual` on SHA-256 digests, JWT in an `httpOnly` `SameSite=Lax` cookie, rate-limited login. Everything is private by default; public routes opt out with `@Public()`.
+**Авторизация для одного владельца.** Пароль из переменных окружения сравнивается через `timingSafeEqual` по SHA-256, JWT хранится в cookie `HttpOnly` с `SameSite=Lax`, число попыток входа ограничено. Всё закрыто по умолчанию, публичные адреса явно помечены `@Public()`.
 
-## Project layout
+## Структура проекта
 
 ```
-packages/shared/        zod schemas, DTOs, socket event types, formatting helpers
+packages/shared/        zod-схемы, DTO, типы WebSocket-событий, форматирование
 apps/api/src/
-  monitors/             CRUD + status state machine
-  checks/               checkers, runner, heartbeat endpoint, retention
-  scheduler/            CheckScheduler port + in-memory adapter
-  incidents/            open/resolve on status changes
-  notifications/        Notifier interface, Telegram + webhook channels
-  insights/             read side: dashboard overview, stats, public status page
-  realtime/             WebSocket gateway: audiences, keepalive
+  monitors/             CRUD и логика смены статуса
+  checks/               проверки, CheckRunner, приём heartbeat, очистка старых данных
+  scheduler/            порт CheckScheduler и реализация в памяти
+  incidents/            открытие и закрытие инцидентов
+  notifications/        интерфейс Notifier, каналы Telegram и вебхук
+  insights/             чтение: обзор для панели, статистика, публичная страница
+  realtime/             WebSocket-шлюз: получатели, проверка живых соединений
+  scripts/              seed-demo: синтетическая история для демонстрации
   auth/ config/ database/ events/ health/
 apps/web/src/
   features/             status-page, auth, admin, monitors, incidents
-  components/           ui primitives, status visuals, SVG charts
-  live/                 LiveConnection (reconnect/backoff) + typed useLiveEvent hook
-  lib/                  api client, query client, time & format helpers
+  components/           UI-примитивы, статусы, SVG-графики
+  live/                 LiveConnection (переподключение) и типизированный useLiveEvent
+  lib/                  API-клиент, кэш запросов, форматирование дат и чисел
 ```
 
-## Running locally
+## Локальный запуск
 
-Requires Node 24+.
+Нужен Node.js 24+.
 
 ```bash
 npm install
-cp apps/api/.env.example apps/api/.env   # set ADMIN_PASSWORD and JWT_SECRET
-npm run seed:demo -w @vigil/api          # optional: synthetic 90-day history
+cp apps/api/.env.example apps/api/.env   # задайте ADMIN_PASSWORD и JWT_SECRET
+npm run seed:demo -w @vigil/api          # по желанию: синтетическая история за 90 дней
 npm run dev
 ```
 
-- Status page: http://localhost:5173
-- Dashboard: http://localhost:5173/admin
+- Страница статуса: http://localhost:5173
+- Панель управления: http://localhost:5173/admin
 
-Data is stored in `apps/api/.data/pglite` (stop the dev server before seeding: PGlite allows one process per folder). To use a real Postgres, set `DATABASE_URL`; migrations run on start either way.
+Данные хранятся в `apps/api/.data/pglite`. Перед `seed:demo` остановите dev-сервер: PGlite разрешает только один процесс на папку. Чтобы использовать настоящий Postgres, задайте `DATABASE_URL`, миграции применятся при запуске.
 
 ```bash
-npm test          # unit + integration tests (shared, api, web)
+npm test          # модульные и интеграционные тесты (shared, api, web)
 npm run typecheck
 npm run lint      # Biome
 npm run build
 ```
 
-After changing `apps/api/src/database/schema.ts`: `npm run db:generate -w @vigil/api`.
+После изменения `apps/api/src/database/schema.ts`: `npm run db:generate -w @vigil/api`.
 
-## Production
+## Продакшен
 
-`npm run build` and `NODE_ENV=production npm start` run **one process** that serves the API, the WebSocket and the built React app. Put Caddy or nginx in front for HTTPS. A step-by-step guide in Russian — VPS, systemd, Caddy, Telegram bot, connecting your own sites and cron jobs — is in [docs/SETUP.ru.md](docs/SETUP.ru.md).
+`npm run build` и `NODE_ENV=production npm start` запускают **один процесс**, который отдаёт API, WebSocket и собранный React-интерфейс. Для HTTPS перед ним ставится Caddy или nginx. Пошаговая инструкция — VPS, systemd, Caddy, Telegram-бот, подключение своих сайтов и cron-задач — в [docs/SETUP.ru.md](docs/SETUP.ru.md).
 
-## Security
+## Безопасность
 
-- Everything is private by default; public routes opt out with `@Public()`. The public status page and `status:*` socket events never contain URLs, hosts or error messages.
-- Session: signed JWT in an `HttpOnly`, `SameSite=Lax` cookie, `Secure` whenever `APP_URL` is https. Login is rate-limited (5/min per IP), the password is compared in constant time.
-- WebSocket: admin events require both a valid session and our own `Origin` (protection against cross-site WebSocket hijacking); dead sockets are dropped by ping/pong.
-- Headers via helmet: strict CSP (`script-src 'self'`, no inline scripts), HSTS, `nosniff`, `frame-ancestors 'self'`.
-- In production the app refuses to start with placeholder secrets, a short password or a non-https `APP_URL`.
-- All input is validated by the shared zod schemas; the HTTP checker reads at most 1 MB of a page.
-- Known trade-off: monitors can target any host, including private addresses — that is the point of monitoring your own servers, and only the signed-in owner can create them.
+- Всё закрыто по умолчанию, публичные адреса явно помечены `@Public()`. Публичная страница и события `status:*` никогда не содержат адресов, хостов и текстов ошибок.
+- Сессия: подписанный JWT в cookie с флагами `HttpOnly` и `SameSite=Lax`, плюс `Secure`, если `APP_URL` начинается с https. Вход ограничен 5 попытками в минуту с одного IP, пароль сравнивается за постоянное время.
+- WebSocket: события админки получает только подключение с действующей сессией **и** с нашего домена (защита от перехвата WebSocket с чужого сайта). Мёртвые соединения закрываются по ping/pong.
+- Заголовки через helmet: строгий CSP (`script-src 'self'`, без встроенных скриптов), HSTS, `nosniff`, `frame-ancestors 'self'`.
+- В продакшене приложение не запустится с секретами из примера, коротким паролем или `APP_URL` без https.
+- Все входные данные проверяются общими zod-схемами, HTTP-проверка читает не больше 1 МБ страницы.
+- Осознанный компромисс: мониторы можно направить на любой адрес, включая внутренние. Ради этого мониторинг своих серверов и нужен, а создавать мониторы может только владелец.
 
-### Heartbeat example
+### Пример heartbeat
 
 ```cron
-*/5 * * * *  /usr/local/bin/backup.sh && curl -fsS -m 10 --retry 3 https://status.example.com/api/heartbeat/<token> > /dev/null
+*/5 * * * *  /usr/local/bin/backup.sh && curl -fsS -m 10 --retry 3 https://status.example.com/api/heartbeat/<токен> > /dev/null
 ```
 
-The dashboard generates this snippet (crontab, curl, systemd) with the right schedule.
+Панель сама генерирует такую строку (crontab, curl, systemd) с правильным расписанием.
 
-## Roadmap
+## Планы
 
-- [ ] Docker Compose: Postgres + Redis + API + nginx serving the web build
-- [ ] BullMQ adapter for `CheckScheduler` (`upsertJobScheduler`) and separate worker processes; Redis pub/sub fan-out for several API instances
-- [ ] Maintenance windows (suppress alerts, show on status page)
-- [ ] Notification channels configurable from the UI, per-monitor routing
-- [ ] Checks from several regions with quorum before declaring an outage
-- [ ] Playwright e2e tests for the main flows
+- [ ] Docker Compose: Postgres, Redis, API
+- [ ] Адаптер BullMQ для `CheckScheduler` (`upsertJobScheduler`) и отдельные воркеры; рассылка событий через Redis pub/sub для нескольких экземпляров API
+- [ ] Окна обслуживания (без тревог, с отметкой на странице статуса)
+- [ ] Настройка каналов уведомлений из интерфейса, свои каналы для каждого монитора
+- [ ] Команды Telegram-бота: `/status`, `/pause`, утренняя сводка
+- [ ] Проверки из нескольких регионов с подтверждением сбоя
+- [ ] E2E-тесты на Playwright для основных сценариев
