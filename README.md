@@ -1,16 +1,28 @@
 # Vigil
 
+[![CI](https://github.com/Kasatken/vigil-uptime/actions/workflows/ci.yml/badge.svg)](https://github.com/Kasatken/vigil-uptime/actions/workflows/ci.yml)
+
 Self-hosted uptime monitor for a handful of sites and servers. Workers check HTTP endpoints, TCP ports and cron-job heartbeats; a React dashboard and a public status page update live over WebSocket; alerts go to Telegram or any webhook.
 
 I built it to watch my own three sites and a VPS. It runs with **zero infrastructure** in development (Postgres is embedded via PGlite) and switches to a real Postgres with one env variable.
 
-The interface is in Russian.
+The interface is in Russian. Screenshots below use **synthetic demo data** (`npm run seed:demo`): 90 days of history with a few realistic outages and one monitor that is down right now.
 
-| Public status page                                    | Dashboard                                    |
-| ----------------------------------------------------- | -------------------------------------------- |
-| ![Status page](docs/screenshots/status-page.jpg)      | ![Dashboard](docs/screenshots/dashboard.jpg) |
-| **A monitor that is down**                            | **Mobile**                                   |
-| ![Monitor details](docs/screenshots/monitor-down.jpg) | ![Mobile](docs/screenshots/mobile.jpg)       |
+![Public status page](docs/screenshots/status-page.jpg)
+
+| Dashboard                                                   | Monitor details                                                      |
+| ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| ![Dashboard](docs/screenshots/dashboard.jpg)                | ![Monitor details](docs/screenshots/monitor-detail.jpg)              |
+| **Response time, 90-day history, live check log**           | **Incidents**                                                        |
+| ![Response time chart](docs/screenshots/response-chart.jpg) | ![Incidents](docs/screenshots/incidents.jpg)                         |
+| **Dark theme**                                              | **Status page: incident history**                                    |
+| ![Dark dashboard](docs/screenshots/dashboard-dark.jpg)      | ![Status page incidents](docs/screenshots/status-page-incidents.jpg) |
+
+<p align="center">
+  <img src="docs/screenshots/mobile-status.jpg" width="270" alt="Status page on a phone">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/mobile-dashboard.jpg" width="270" alt="Dashboard on a phone">
+</p>
 
 ## Features
 
@@ -111,14 +123,14 @@ Requires Node 24+.
 ```bash
 npm install
 cp apps/api/.env.example apps/api/.env   # set ADMIN_PASSWORD and JWT_SECRET
+npm run seed:demo -w @vigil/api          # optional: synthetic 90-day history
 npm run dev
 ```
 
 - Status page: http://localhost:5173
 - Dashboard: http://localhost:5173/admin
-- API: http://localhost:3000/api (proxied by Vite in dev)
 
-Data is stored in `apps/api/.data/pglite`. To use a real Postgres, set `DATABASE_URL`; migrations run on start either way.
+Data is stored in `apps/api/.data/pglite` (stop the dev server before seeding: PGlite allows one process per folder). To use a real Postgres, set `DATABASE_URL`; migrations run on start either way.
 
 ```bash
 npm test          # unit + integration tests (shared, api, web)
@@ -128,6 +140,20 @@ npm run build
 ```
 
 After changing `apps/api/src/database/schema.ts`: `npm run db:generate -w @vigil/api`.
+
+## Production
+
+`npm run build` and `NODE_ENV=production npm start` run **one process** that serves the API, the WebSocket and the built React app. Put Caddy or nginx in front for HTTPS. A step-by-step guide in Russian — VPS, systemd, Caddy, Telegram bot, connecting your own sites and cron jobs — is in [docs/SETUP.ru.md](docs/SETUP.ru.md).
+
+## Security
+
+- Everything is private by default; public routes opt out with `@Public()`. The public status page and `status:*` socket events never contain URLs, hosts or error messages.
+- Session: signed JWT in an `HttpOnly`, `SameSite=Lax` cookie, `Secure` whenever `APP_URL` is https. Login is rate-limited (5/min per IP), the password is compared in constant time.
+- WebSocket: admin events require both a valid session and our own `Origin` (protection against cross-site WebSocket hijacking); dead sockets are dropped by ping/pong.
+- Headers via helmet: strict CSP (`script-src 'self'`, no inline scripts), HSTS, `nosniff`, `frame-ancestors 'self'`.
+- In production the app refuses to start with placeholder secrets, a short password or a non-https `APP_URL`.
+- All input is validated by the shared zod schemas; the HTTP checker reads at most 1 MB of a page.
+- Known trade-off: monitors can target any host, including private addresses — that is the point of monitoring your own servers, and only the signed-in owner can create them.
 
 ### Heartbeat example
 
