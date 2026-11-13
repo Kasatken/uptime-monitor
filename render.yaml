@@ -1,0 +1,31 @@
+# Render Blueprint: Dashboard → New → Blueprint → this repository.
+# Free plan is for trying the app out: the service sleeps after 15 minutes without visitors,
+# and checks pause until someone opens the page again.
+services:
+  - type: web
+    name: vigil
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "24"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: STATUS_PAGE_TITLE
+        value: Статус сервисов
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false

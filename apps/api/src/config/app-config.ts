@@ -5,7 +5,11 @@ const optionalString = z.preprocess(emptyToUndefined, z.string().optional());
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  API_PORT: z.coerce.number().int().default(3000),
+  // Hosting platforms (Render, Fly, Railway) pass the port as PORT
+  API_PORT: z.coerce.number().int().optional(),
+  PORT: z.coerce.number().int().optional(),
+  // Express "trust proxy": 'loopback' for Caddy/nginx on the same machine, a hop count (1) behind a platform proxy
+  TRUST_PROXY: z.string().default('loopback'),
   APP_URL: z.url().default('http://localhost:5173'),
 
   ADMIN_PASSWORD: z.string().min(8, 'ADMIN_PASSWORD must be at least 8 characters'),
@@ -52,6 +56,7 @@ const productionSchema = envSchema.superRefine((env, ctx) => {
 export class AppConfig {
   readonly isProduction: boolean;
   readonly port: number;
+  readonly trustProxy: string | number;
   readonly appUrl: string;
   readonly appOrigin: string;
   readonly cookieSecure: boolean;
@@ -68,7 +73,8 @@ export class AppConfig {
 
   private constructor(env: z.output<typeof envSchema>) {
     this.isProduction = env.NODE_ENV === 'production';
-    this.port = env.API_PORT;
+    this.port = env.API_PORT ?? env.PORT ?? 3000;
+    this.trustProxy = /^\d+$/.test(env.TRUST_PROXY) ? Number(env.TRUST_PROXY) : env.TRUST_PROXY;
     this.appUrl = env.APP_URL.replace(/\/$/, '');
     this.appOrigin = new URL(env.APP_URL).origin;
     this.cookieSecure = env.APP_URL.startsWith('https://');
@@ -88,7 +94,11 @@ export class AppConfig {
   }
 
   static fromEnv(env: NodeJS.ProcessEnv = process.env): AppConfig {
-    const result = productionSchema.safeParse(env);
+    // Render exposes the public address of the service; saves guessing it before the first deploy
+    const result = productionSchema.safeParse({
+      ...env,
+      APP_URL: env.APP_URL || env.RENDER_EXTERNAL_URL,
+    });
     if (!result.success) {
       const details = result.error.issues
         .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)

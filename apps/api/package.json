@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.build.json",
     "predev": "tsc -p tsconfig.build.json",
     "dev": "concurrently -k -r \"tsc -p tsconfig.build.json --watch --preserveWatchOutput\" \"nodemon --quiet --watch dist --ext js --delay 0.5 --signal SIGTERM --exec 'node --env-file-if-exists=.env --enable-source-maps dist/main.js'\"",
-    "start": "node --env-file-if-exists=.env --enable-source-maps dist/main.js",
+    "start": "node --max-old-space-size=128 --max-semi-space-size=2 --env-file-if-exists=.env --enable-source-maps dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",

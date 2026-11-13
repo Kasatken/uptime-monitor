@@ -144,7 +144,14 @@ npm run build
 
 ## Продакшен
 
-`npm run build` и `NODE_ENV=production npm start` запускают **один процесс**, который отдаёт API, WebSocket и собранный React-интерфейс. Для HTTPS перед ним ставится Caddy или nginx. Пошаговая инструкция — VPS, systemd, Caddy, Telegram-бот, подключение своих сайтов и cron-задач — в [docs/SETUP.ru.md](docs/SETUP.ru.md).
+`npm run build` и `NODE_ENV=production npm start` запускают **один процесс**, который отдаёт API, WebSocket и собранный React-интерфейс. Для HTTPS перед ним ставится Caddy или nginx.
+
+- **Попробовать бесплатно**: Render + Neon по готовому `render.yaml`, без своего сервера.
+- **Свой сервер**: systemd и Caddy с автоматическим HTTPS.
+
+Оба варианта по шагам, плюс Telegram-бот и подключение своих сайтов и cron-задач, — в [docs/SETUP.ru.md](docs/SETUP.ru.md).
+
+Ресурсы (замер на шести мониторах с проверкой раз в минуту): процессор — меньше 1% одного ядра; память — около 110 МБ с отдельным Postgres или около 180 МБ со встроенным PGlite (куча V8 ограничена 128 МБ в `npm start`, без этого вдвое больше); диск — около 180 байт на проверку.
 
 ## Безопасность
 

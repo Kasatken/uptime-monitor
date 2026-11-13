@@ -42,4 +42,26 @@ describe('AppConfig', () => {
     expect(config.cookieSecure).toBe(true);
     expect(config.appOrigin).toBe('https://status.example.com');
   });
+
+  it('takes the port from PORT when API_PORT is not set', () => {
+    const base = { ADMIN_PASSWORD: 'password-123', JWT_SECRET: 'x'.repeat(20) };
+    expect(AppConfig.fromEnv({ ...base, PORT: '10000' }).port).toBe(10000);
+    expect(AppConfig.fromEnv({ ...base, PORT: '10000', API_PORT: '3000' }).port).toBe(3000);
+    expect(AppConfig.fromEnv(base).port).toBe(3000);
+  });
+
+  it('reads TRUST_PROXY as a hop count or an Express preset', () => {
+    const base = { ADMIN_PASSWORD: 'password-123', JWT_SECRET: 'x'.repeat(20) };
+    expect(AppConfig.fromEnv({ ...base, TRUST_PROXY: '1' }).trustProxy).toBe(1);
+    expect(AppConfig.fromEnv(base).trustProxy).toBe('loopback');
+  });
+
+  it('falls back to the Render address when APP_URL is not set', () => {
+    const config = AppConfig.fromEnv({
+      ADMIN_PASSWORD: 'password-123',
+      JWT_SECRET: 'x'.repeat(20),
+      RENDER_EXTERNAL_URL: 'https://vigil-abc.onrender.com',
+    });
+    expect(config.appOrigin).toBe('https://vigil-abc.onrender.com');
+  });
 });

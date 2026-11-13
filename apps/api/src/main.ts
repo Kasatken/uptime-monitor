@@ -34,8 +34,8 @@ async function bootstrap() {
   );
   app.use(cookieParser());
   app.useWebSocketAdapter(new WsAdapter(app));
-  // needed for correct client IPs in the rate limiter behind nginx/caddy
-  app.set('trust proxy', 'loopback');
+  // correct client IPs for the login rate limiter behind a reverse proxy
+  app.set('trust proxy', config.trustProxy);
   app.enableShutdownHooks();
 
   serveWebApp(app, config.webDistDir ?? DEFAULT_WEB_DIST);
