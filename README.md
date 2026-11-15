@@ -1,6 +1,6 @@
 # Vigil
 
-[![CI](https://github.com/Kasatken/vigil-uptime/actions/workflows/ci.yml/badge.svg)](https://github.com/Kasatken/vigil-uptime/actions/workflows/ci.yml)
+[![CI](https://github.com/Kasatken/uptime-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/Kasatken/uptime-monitor/actions/workflows/ci.yml)
 
 Мониторинг доступности для своих сайтов и серверов. Воркеры проверяют HTTP-адреса, TCP-порты и сигналы от cron-задач, панель управления и публичная страница статуса обновляются в реальном времени по WebSocket, уведомления приходят в Telegram или на любой вебхук.
 

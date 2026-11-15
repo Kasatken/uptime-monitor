@@ -33,7 +33,7 @@ DATABASE_URL="строка из Neon" npm run seed:demo -w @vigil/api
 
 ### Шаг 3. Деплой в Render
 
-1. Зарегистрируйтесь на [render.com](https://render.com) через GitHub и разрешите доступ к репозиторию `vigil-uptime` (подходит и приватный).
+1. Зарегистрируйтесь на [render.com](https://render.com) через GitHub и разрешите доступ к репозиторию `uptime-monitor` (подходит и приватный).
 2. **New → Blueprint**, выберите репозиторий. Render найдёт файл `render.yaml` и покажет сервис `vigil`.
 3. Заполните переменные, которые он попросит:
    - `ADMIN_PASSWORD` — пароль от панели, минимум 12 символов (`openssl rand -base64 18`);
@@ -66,7 +66,7 @@ DATABASE_URL="строка из Neon" npm run seed:demo -w @vigil/api
 ## 2. Установка
 
 ```bash
-git clone https://github.com/Kasatken/vigil-uptime.git /opt/vigil
+git clone https://github.com/Kasatken/uptime-monitor.git /opt/vigil
 cd /opt/vigil
 npm ci
 cp apps/api/.env.example apps/api/.env
